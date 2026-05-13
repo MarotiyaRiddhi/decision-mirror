@@ -4,50 +4,59 @@ Official Next.js quickstart for building a browser-based voice AI experience wit
 
 ## Prerequisites
 
-- Node.js 22+
-- pnpm
-- [Agora CLI](https://www.npmjs.com/package/agoraio-cli)
-- Agora App ID and App Certificate with Conversational AI enabled
+- [Node.js 22+](https://nodejs.org/en/download/)
+- [pnpm](https://pnpm.io/installation)
+- [Agora CLI](https://github.com/AgoraIO-Community/cli)
 
 ## Run It
 
-1. Login with the Agora CLI and create a project:
-   `agora login`
-   `agora project create my-first-voice-agent --feature rtc --feature convoai`
-   `agora project use my-first-voice-agent`
-2. Clone the repo and install dependencies.
-3. Copy `env.local.example` to `.env.local`.
-4. Fill `.env.local` using the values from `agora project env --with-secrets`.
-5. Run `pnpm dev`.
-6. Open `http://localhost:3000`.
+Official flow: sign in, scaffold the Next.js template, install, and run. `agora init` clones the starter, binds an Agora project, and writes `.env.local`.
+
+1. Install the CLI (if needed) and sign in:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/AgoraIO/cli/main/install.sh | sh -s -- --add-to-path
+   agora login
+   ```
+
+2. **Scaffold and run** (any directory name is fine instead of `my-nextjs-demo`):
+
+   ```bash
+   agora init my-nextjs-demo --template nextjs
+   cd my-nextjs-demo
+   pnpm install
+   pnpm dev
+   ```
+
+3. Open **http://localhost:3000** and click **Start conversation**.
+
+If the agent does not join or transcripts do not appear, run **`agora project doctor --deep`** to check credentials, feature enablement, network reachability, and local env binding.
+
+### Working from a clone of this repository
+
+Use this path if you already cloned **this** repo (for example to contribute or fork):
 
 ```bash
 git clone https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs.git
 cd agent-quickstart-nextjs
 agora login
-agora project create my-first-voice-agent --feature rtc --feature convoai
-agora project use my-first-voice-agent
+agora project use <your-project>
 pnpm install
-cp env.local.example .env.local
-# Map the exported Agora CLI values into the Next.js env names shown in env.local.example
-# NEXT_PUBLIC_AGORA_APP_ID=<AGORA_APP_ID from `agora project env --with-secrets`>
-# NEXT_AGORA_APP_CERTIFICATE=<AGORA_APP_CERTIFICATE from `agora project env --with-secrets`>
-pnpm run doctor
+agora project env write .env.local
+agora project doctor --deep
 pnpm dev
 ```
 
-Required environment variables:
+Required variables (also documented in [`env.local.example`](env.local.example)):
 
 - `NEXT_PUBLIC_AGORA_APP_ID`
 - `NEXT_AGORA_APP_CERTIFICATE`
 
-Optional convenience override:
+Optional:
 
-- `NEXT_PUBLIC_AGENT_UID` defaults to `123456`
+- `NEXT_PUBLIC_AGENT_UID` — defaults to `123456` (must match [`app/api/invite-agent/route.ts`](app/api/invite-agent/route.ts) when set)
 
-The default agent configuration in [`app/api/invite-agent/route.ts`](app/api/invite-agent/route.ts) uses Agora-managed defaults for STT, LLM, and TTS, so no additional vendor API keys are required for the base quickstart.
-
-`env.local.example` is the reference for the Next.js-specific variable names. The recommended setup flow is to create/select the Agora project with the CLI, inspect the values with `agora project env --with-secrets`, and copy them into `.env.local` using the names above.
+The default agent configuration in [`app/api/invite-agent/route.ts`](app/api/invite-agent/route.ts) uses Agora-managed STT, LLM, and TTS, so no extra vendor API keys are required for the base quickstart.
 
 ## Commands
 
@@ -121,11 +130,12 @@ Examples:
 
 ## Troubleshooting
 
-- `pnpm run doctor` fails: copy `env.local.example` to `.env.local` and set `NEXT_PUBLIC_AGORA_APP_ID` plus `NEXT_AGORA_APP_CERTIFICATE`
-- Unsure where the values come from: run `agora project use my-first-voice-agent` and `agora project env --with-secrets`
-- RTM login fails: confirm the token route still uses `RtcTokenBuilder.buildTokenWithRtm`
-- Transcript speakers are inverted: check the `uid === "0"` remap logic in `components/ConversationComponent.tsx`
-- Agent never appears in channel: confirm `NEXT_PUBLIC_AGENT_UID` matches the value used in `app/api/invite-agent/route.ts`
+- **Agent does not join or transcripts are missing:** run `agora project doctor --deep`.
+- **`pnpm run doctor` fails:** run `agora project env write .env.local`, then retry.
+- **Manual clone / env values:** `agora project use <your-project>` then `agora project env write .env.local`.
+- **RTM login fails:** confirm [`app/api/generate-agora-token/route.ts`](app/api/generate-agora-token/route.ts) still uses `RtcTokenBuilder.buildTokenWithRtm`.
+- **Transcript speakers inverted:** check the `uid === "0"` remap in [`components/ConversationComponent.tsx`](components/ConversationComponent.tsx).
+- **Agent never appears in channel:** ensure `NEXT_PUBLIC_AGENT_UID` matches the value used in [`app/api/invite-agent/route.ts`](app/api/invite-agent/route.ts).
 
 ## More Docs
 
