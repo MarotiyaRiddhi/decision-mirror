@@ -2,7 +2,7 @@
 
 import { useState, useRef, Suspense, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import type { RTMClient } from 'agora-rtm';
 import type {
   AgoraTokenData,
@@ -10,9 +10,9 @@ import type {
   AgentResponse,
   AgoraRenewalTokens,
 } from '../types/conversation';
-import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LoadingSkeleton } from './LoadingSkeleton';
+import { QuickstartPreCallCard } from './QuickstartPreCallCard';
 
 // Dynamically import the ConversationComponent with ssr disabled
 const ConversationComponent = dynamic(() => import('./ConversationComponent'), {
@@ -203,60 +203,28 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground relative overflow-hidden">
-      {/* Faint ambient gradient — provides depth signal on the pre-call screen */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 40% at 50% 60%, hsl(194 100% 50% / 0.04) 0%, transparent 70%)',
-        }}
-      />
-
+    <div className="relative flex h-dvh min-h-screen flex-col overflow-hidden bg-background text-foreground">
       {/* Hero shell: either shows the pre-call CTA or swaps in the live conversation experience. */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="z-10 flex max-w-lg flex-col items-center gap-4 px-4 text-center">
-          <p className="animate-fade-up text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Agora Conversational AI
-          </p>
-          <h1 className="animate-fade-up animate-fade-up-d1 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Talk to your voice agent
-          </h1>
-
-          {!showConversation && (
-            <p className="animate-fade-up animate-fade-up-d2 text-sm leading-relaxed text-muted-foreground sm:text-base">
-              This Next.js quickstart streams real-time speech and a live
-              transcript from the ConvoAI engine—sub-second latency,
-              production-style pipeline, and API routes you can read and ship
-              from one repo. No extra wiring to feel the product.
-            </p>
-          )}
-
+      <div
+        className={`flex min-h-0 flex-1 flex-col ${
+          showConversation
+            ? 'items-stretch justify-start'
+            : 'items-center justify-center'
+        }`}
+      >
+        <div
+          className={`z-10 flex min-h-0 flex-1 flex-col ${
+            showConversation
+              ? 'h-full w-full max-w-none items-stretch gap-0 px-0 text-left'
+              : 'w-full max-w-none items-center justify-center px-4 text-center'
+          }`}
+        >
           {!showConversation ? (
-            <>
-              {/* Entry CTA: starts token fetch, agent invite, and RTM setup for a new session. */}
-              <Button
-                onClick={handleStartConversation}
-                disabled={isLoading}
-                className="w-56 animate-fade-up animate-fade-up-d3 border-2 border-primary bg-primary text-primary-foreground hover:bg-transparent hover:text-primary disabled:hover:bg-primary disabled:hover:text-primary-foreground"
-                aria-label={
-                  isLoading
-                    ? 'Starting conversation with AI agent'
-                    : 'Start conversation with AI agent'
-                }
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Starting...
-                  </>
-                ) : (
-                  'Try it Now'
-                )}
-              </Button>
-              {error && <p className="text-xs text-destructive">{error}</p>}
-            </>
+            <QuickstartPreCallCard
+              isLoading={isLoading}
+              error={error}
+              onStartConversation={handleStartConversation}
+            />
           ) : agoraData && rtmClient ? (
             <>
               {/* Non-fatal invite warning: the browser session can still render even if agent start failed. */}
@@ -290,8 +258,8 @@ export default function LandingPage() {
       </div>
 
       {/* Persistent attribution footer for the pre-call and in-call views. */}
-      <footer className="fixed bottom-0 left-0 py-4 pl-4 md:py-6 md:pl-6 z-40">
-        <div className="flex items-center justify-start gap-2 text-muted-foreground">
+      <footer className="fixed bottom-0 right-0 z-40 py-4 pr-4 md:py-6 md:pr-6">
+        <div className="flex items-center justify-end gap-2 text-muted-foreground">
           <span className="text-xs font-medium tracking-wide uppercase">
             Powered by
           </span>
@@ -302,13 +270,12 @@ export default function LandingPage() {
             className="hover:text-primary transition-colors"
             aria-label="Visit Agora's website"
           >
-            <img
+            <Image
               src="/agora-logo-rgb-blue.svg"
               alt="Agora"
               width={86}
               height={24}
-              loading="eager"
-              fetchPriority="high"
+              priority
               className="h-6 w-auto hover:opacity-80 transition-opacity translate-y-1"
             />
             <span className="sr-only">Agora</span>

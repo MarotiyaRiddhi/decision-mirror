@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { X } from 'lucide-react';
-import { setParameter } from 'agora-rtc-sdk-ng/esm';
-import {
+import AgoraRTC, {
   useRTCClient,
   useLocalMicrophoneTrack,
   useRemoteUsers,
@@ -23,9 +21,8 @@ import {
   type UserTranscription,
   type AgentTranscription,
 } from 'agora-agent-client-toolkit';
-import { AgentVisualizer, ConvoTextStream } from 'agora-agent-uikit';
+import { AgentVisualizer } from 'agora-agent-uikit';
 import { MicButtonWithVisualizer } from 'agora-agent-uikit/rtc';
-import { Button } from '@/components/ui/button';
 import { DEFAULT_AGENT_UID } from '@/lib/agora';
 import {
   getCurrentInProgressMessage,
@@ -40,10 +37,20 @@ import {
   type ConnectionIssue,
 } from './ConversationErrorCard';
 import { ConnectionStatusPanel } from './ConnectionStatusPanel';
+import { QuickstartConversationLayout } from './QuickstartConversationLayout';
+import {
+  QuickstartPipelineMetrics,
+  type QuickstartAgentMetric,
+} from './QuickstartPipelineMetrics';
+import { QuickstartTranscriptPanel } from './QuickstartTranscriptPanel';
 import type { ConversationComponentProps } from '@/types/conversation';
 
 // Cap the displayed issues list to avoid overwhelming the UI during a cascade of errors.
 const MAX_CONNECTION_ISSUES = 6;
+
+type AgoraRtcWithParameters = typeof AgoraRTC & {
+  setParameter?: (key: string, value: unknown) => void;
+};
 
 // Payload shape for signaling-level errors forwarded by the agent over RTM.
 // The `module` field identifies which backend subsystem (LLM / ASR / TTS) raised the error.
@@ -107,6 +114,7 @@ export default function ConversationComponent({
     TranscriptHelperItem<Partial<UserTranscription | AgentTranscription>>[]
   >([]);
   const [agentState, setAgentState] = useState<AgentState | null>(null);
+  const [agentMetrics, setAgentMetrics] = useState<QuickstartAgentMetric[]>([]);
   const [connectionIssues, setConnectionIssues] = useState<ConnectionIssue[]>(
     [],
   );
@@ -172,7 +180,10 @@ export default function ConversationComponent({
   useEffect(() => {
     if (!client) return;
     try {
-      setParameter('ENABLE_AUDIO_PTS', true);
+      (AgoraRTC as AgoraRtcWithParameters).setParameter?.(
+        'ENABLE_AUDIO_PTS',
+        true,
+      );
     } catch (error) {
       console.warn('Could not set ENABLE_AUDIO_PTS:', error);
     }
@@ -228,6 +239,9 @@ export default function ConversationComponent({
         ai.on(AgoraVoiceAIEvents.AGENT_STATE_CHANGED, (_, event) =>
           setAgentState(event.state),
         );
+        ai.on(AgoraVoiceAIEvents.AGENT_METRICS, (_, metrics) => {
+          setAgentMetrics((prev) => [...prev, metrics].slice(-8));
+        });
         ai.on(AgoraVoiceAIEvents.MESSAGE_ERROR, (agentUserId, error) => {
           addConnectionIssue({
             id: `${Date.now()}-${agentUserId}-message-error-${error.code}`,
@@ -346,7 +360,7 @@ export default function ConversationComponent({
   }, [rtmClient, addConnectionIssue]);
 
   // The toolkit uses uid="0" for local user speech — remap to actual RTC UID
-  // so ConvoTextStream renders user messages on the correct side.
+  // so the transcript panel renders user messages on the correct side.
   // Also normalize punctuation spacing for display when upstream text arrives compacted.
   const transcript = useMemo(() => {
     return normalizeTranscript(rawTranscript, String(client.uid));
@@ -354,11 +368,11 @@ export default function ConversationComponent({
 
   // Completed (END + INTERRUPTED) messages shown as history.
   // INTERRUPTED must be included — if the agent's first turn is cut off,
-  // messageList stays empty and ConvoTextStream never auto-opens.
+  // messageList stays empty and the first interrupted turn is never shown.
   const messageList = useMemo(() => getMessageList(transcript), [transcript]);
 
   const currentInProgressMessage = useMemo(() => {
-    // ConvoTextStream renders the live partial turn separately from the history list.
+    // The live partial turn renders separately from the completed history list.
     return getCurrentInProgressMessage(transcript);
   }, [transcript]);
 
@@ -451,10 +465,29 @@ export default function ConversationComponent({
 
   useClientEvent(client, 'token-privilege-will-expire', handleTokenWillExpire);
 
+  const handleEndConversation = useCallback(async () => {
+    const track = localMicrophoneTrack;
+    if (track) {
+      try {
+        await client?.unpublish(track);
+      } catch (error) {
+        console.warn('Failed to unpublish microphone track:', error);
+      }
+
+      try {
+        track.stop();
+        track.close();
+      } catch (error) {
+        console.warn('Failed to release microphone track:', error);
+      }
+    }
+
+    onEndConversation();
+  }, [client, localMicrophoneTrack, onEndConversation]);
+
   return (
-    <div className="flex flex-col gap-6 p-4 h-full text-left">
-      {/* Top-left status affordance: opens transport and agent error details without covering the main controls. */}
-      <div className="absolute top-4 left-4">
+    <QuickstartConversationLayout
+      statusPanel={
         <ConnectionStatusPanel
           connectionState={connectionState}
           connectionSeverity={connectionSeverity}
@@ -462,64 +495,51 @@ export default function ConversationComponent({
           isOpen={isConnectionDetailsOpen}
           onToggle={() => setIsConnectionDetailsOpen((open) => !open)}
         />
-      </div>
-
-      {/* Top-right destructive action: stops the cloud agent and ends the current session. */}
-      <div className="absolute top-4 right-4">
-        <Button
-          variant="destructive"
-          size="icon"
-          className="h-9 w-9 rounded-full border-2 border-destructive bg-destructive text-destructive-foreground hover:bg-transparent hover:text-destructive"
-          onClick={onEndConversation}
-          aria-label="End conversation with AI agent"
-          title="End conversation"
+      }
+      pipelineMetrics={<QuickstartPipelineMetrics metrics={agentMetrics} />}
+      transcriptPanel={
+        <QuickstartTranscriptPanel
+          messageList={messageList}
+          currentInProgressMessage={currentInProgressMessage}
+          agentUID={agentUID}
+        />
+      }
+      visualizer={
+        <div
+          className="relative flex h-full min-h-[20rem] w-full max-w-4xl items-center justify-center"
+          role="region"
+          aria-label="AI agent status visualization"
         >
-          <X />
-        </Button>
-      </div>
-
-      {/* Center stage: the visualizer shows agent lifecycle/speaking state, while hidden RemoteUser mounts keep agent audio subscribed. */}
-      <div
-        className="relative h-56 w-full flex items-center justify-center"
-        role="region"
-        aria-label="AI agent status visualization"
-      >
-        <AgentVisualizer state={visualizerState} size="lg" />
-        {remoteUsers.map((user) => (
-          <div key={user.uid} className="hidden">
-            <RemoteUser user={user} />
-          </div>
-        ))}
-      </div>
-
-      {/* Bottom dock: microphone mute/unmute plus input-device switching for the local user. */}
-      <div
-        className="fixed bottom-14 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card/80 backdrop-blur-md border border-border rounded-full px-4 py-2"
-        role="group"
-        aria-label="Audio controls"
-      >
-        <div className="conversation-mic-host flex items-center justify-center">
-          <MicButtonWithVisualizer
-            isEnabled={isEnabled}
-            setIsEnabled={setIsEnabled}
-            track={localMicrophoneTrack}
-            onToggle={handleMicToggle}
-            className="overflow-visible"
-            aria-label={isEnabled ? 'Mute microphone' : 'Unmute microphone'}
-            enabledColor="hsl(var(--primary))"
-            disabledColor="hsl(var(--destructive))"
-          />
+          <AgentVisualizer state={visualizerState} size="lg" />
+          {remoteUsers.map((user) => (
+            <div key={user.uid} className="hidden">
+              <RemoteUser user={user} />
+            </div>
+          ))}
         </div>
-        <MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />
-      </div>
-
-      {/* Transcript panel: completed turns plus the current partial turn stream into the floating chat UI. */}
-      <ConvoTextStream
-        messageList={messageList}
-        currentInProgressMessage={currentInProgressMessage}
-        agentUID={agentUID}
-        className="conversation-transcript"
-      />
-    </div>
+      }
+      controls={
+        <div
+          className="mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-card/80 px-4 py-2 backdrop-blur-md"
+          role="group"
+          aria-label="Audio controls"
+        >
+          <div className="conversation-mic-host flex items-center justify-center">
+            <MicButtonWithVisualizer
+              isEnabled={isEnabled}
+              setIsEnabled={setIsEnabled}
+              track={localMicrophoneTrack}
+              onToggle={handleMicToggle}
+              className="overflow-visible"
+              aria-label={isEnabled ? 'Mute microphone' : 'Unmute microphone'}
+              enabledColor="hsl(var(--primary))"
+              disabledColor="hsl(var(--destructive))"
+            />
+          </div>
+          <MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />
+        </div>
+      }
+      onEndConversation={handleEndConversation}
+    />
   );
 }

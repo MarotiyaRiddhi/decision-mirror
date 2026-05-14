@@ -86,7 +86,7 @@ export function toMessageListItem(
 }
 
 // uid="0" is the toolkit's sentinel for local-user speech. Without remapping it to
-// the actual RTC UID, ConvoTextStream renders the user's speech on the agent's side.
+// the actual RTC UID, the transcript panel renders the user's speech on the agent's side.
 // Also normalises punctuation spacing so all turns display consistently.
 export function normalizeTranscript(
   transcript: TranscriptHelperItem<Partial<UserTranscription | AgentTranscription>>[],
@@ -106,7 +106,7 @@ export function normalizeTranscript(
 // IN_PROGRESS turns are intentionally excluded — they are rendered separately
 // as a streaming partial bubble via getCurrentInProgressMessage.
 // INTERRUPTED turns must be included: if the agent's first turn is cut off and
-// omitted, messageList stays empty and ConvoTextStream never auto-opens.
+// omitted, messageList stays empty and the first interrupted turn is never shown.
 export function getMessageList(
   transcript: TranscriptHelperItem<Partial<UserTranscription | AgentTranscription>>[],
 ) {
@@ -116,8 +116,8 @@ export function getMessageList(
 }
 
 // Returns the single active in-progress turn, or null when none exists.
-// At most one turn is in-progress at a time. ConvoTextStream renders this as
-// a live streaming bubble, distinct from the static message history.
+// At most one turn is in-progress at a time. The transcript panel renders this
+// as a live streaming bubble, distinct from the static message history.
 export function getCurrentInProgressMessage(
   transcript: TranscriptHelperItem<Partial<UserTranscription | AgentTranscription>>[],
 ) {
