@@ -161,7 +161,7 @@ export default function ConversationComponent({
       appid: process.env.NEXT_PUBLIC_AGORA_APP_ID!,
       channel: agoraData.channel,
       token: agoraData.token,
-      uid: parseInt(agoraData.uid, 10) || 0,
+      uid: parseInt(agoraData.uid, 10),
     },
     isReady,
   );

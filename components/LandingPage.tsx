@@ -118,7 +118,7 @@ export default function LandingPage() {
           const { default: AgoraRTM } = await import('agora-rtm');
           const rtm: RTMClient = new AgoraRTM.RTM(
             process.env.NEXT_PUBLIC_AGORA_APP_ID!,
-            String(Date.now()),
+            responseData.uid,
           );
           await rtm.login({ token: responseData.token });
           await rtm.subscribe(responseData.channel);
@@ -149,12 +149,11 @@ export default function LandingPage() {
 
         // RTC and RTM tokens are renewed independently:
         //   - RTC uses the browser client's assigned UID (passed in from ConversationComponent).
-        //   - RTM uses uid=0 because buildTokenWithRtm embeds RTM capability by AppID+channel,
-        //     not by a specific RTM userId — so uid=0 is valid for any RTM client instance.
+        //   - RTM uses the same UID that was used during RTM login (agoraData.uid).
         // Both are fetched in parallel to stay within the token-expiry grace-period window.
         const [rtcResponse, rtmResponse] = await Promise.all([
           fetch(`/api/generate-agora-token?channel=${channel}&uid=${uid}`),
-          fetch(`/api/generate-agora-token?channel=${channel}&uid=0`),
+          fetch(`/api/generate-agora-token?channel=${channel}&uid=${agoraData.uid}`),
         ]);
         const [rtcData, rtmData] = await Promise.all([
           rtcResponse.json(),
