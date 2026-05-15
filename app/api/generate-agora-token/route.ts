@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   if (!APP_ID || !APP_CERTIFICATE) {
     return NextResponse.json(
       { error: 'Agora credentials are not set' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
       APP_ID,
       APP_CERTIFICATE,
       channelName,
-      uid,
+      uid.toString(),
       RtcRole.PUBLISHER,
       expirationTime,
-      expirationTime
+      expirationTime,
     );
     // console.log('Token generated successfully (RTC + RTM)');
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         error: 'Failed to generate Agora token',
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
