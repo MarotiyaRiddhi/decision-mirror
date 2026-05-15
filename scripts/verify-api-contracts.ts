@@ -68,6 +68,230 @@ async function verifyGenerateAgoraTokenRoute() {
   }
 }
 
+async function verifyGenerateAgoraTokenReplacesZeroUid() {
+  const { GET: generateAgoraToken } =
+    await import('../app/api/generate-agora-token/route');
+  const originalBuildTokenWithRtm = RtcTokenBuilder.buildTokenWithRtm;
+  let tokenBuilderArgs: unknown[] | null = null;
+
+  RtcTokenBuilder.buildTokenWithRtm = ((...args: unknown[]) => {
+    tokenBuilderArgs = args;
+    return 'mock-rtc-rtm-token';
+  }) as typeof RtcTokenBuilder.buildTokenWithRtm;
+
+  try {
+    const request = new NextRequest(
+      'http://localhost:3000/api/generate-agora-token?uid=0&channel=test-channel',
+    );
+    const response = await generateAgoraToken(request);
+    const body = await getJson(response);
+
+    assert(
+      response.status === 200,
+      'GET /api/generate-agora-token?uid=0 should return 200',
+    );
+    assert(
+      typeof body.uid === 'string' && body.uid !== '0',
+      'GET /api/generate-agora-token?uid=0 should generate an RTM-safe uid',
+    );
+    assert(
+      Array.isArray(tokenBuilderArgs) && tokenBuilderArgs[3] === body.uid,
+      'buildTokenWithRtm should mint the token for the generated uid',
+    );
+  } finally {
+    RtcTokenBuilder.buildTokenWithRtm = originalBuildTokenWithRtm;
+  }
+}
+
+async function verifyChatCompletionsMissingEnv() {
+  const { createChatCompletionsHandler } =
+    await import('../app/api/chat/completions/route');
+  const originalApiKey = process.env.NEXT_LLM_API_KEY;
+  const originalUrl = process.env.NEXT_LLM_URL;
+
+  delete process.env.NEXT_LLM_API_KEY;
+  delete process.env.NEXT_LLM_URL;
+
+  const handler = createChatCompletionsHandler({
+    createOpenAIClient: (() => {
+      throw new Error('createOpenAI should not be called when env is missing');
+    }) as never,
+    streamTextImpl: (() => {
+      throw new Error('streamText should not be called when env is missing');
+    }) as never,
+  });
+
+  try {
+    const request = new NextRequest(
+      'http://localhost:3000/api/chat/completions',
+      {
+        body: JSON.stringify({ messages: [] }),
+        method: 'POST',
+      },
+    );
+    const response = await handler(request);
+    const body = await getJson(response);
+
+    assert(
+      response.status === 500,
+      'POST /api/chat/completions should reject missing LLM env',
+    );
+    assert(
+      body.error === 'NEXT_LLM_API_KEY and NEXT_LLM_URL must be set',
+      'POST /api/chat/completions should explain missing LLM env',
+    );
+  } finally {
+    if (originalApiKey === undefined) {
+      delete process.env.NEXT_LLM_API_KEY;
+    } else {
+      process.env.NEXT_LLM_API_KEY = originalApiKey;
+    }
+    if (originalUrl === undefined) {
+      delete process.env.NEXT_LLM_URL;
+    } else {
+      process.env.NEXT_LLM_URL = originalUrl;
+    }
+  }
+}
+
+async function verifyChatCompletionsInvalidJson() {
+  const { createChatCompletionsHandler } =
+    await import('../app/api/chat/completions/route');
+  const originalApiKey = process.env.NEXT_LLM_API_KEY;
+  const originalUrl = process.env.NEXT_LLM_URL;
+  process.env.NEXT_LLM_API_KEY = 'test-key';
+  process.env.NEXT_LLM_URL = 'https://example.test/v1/chat/completions';
+
+  const handler = createChatCompletionsHandler({
+    createOpenAIClient: (() => {
+      throw new Error('createOpenAI should not be called for invalid JSON');
+    }) as never,
+    streamTextImpl: (() => {
+      throw new Error('streamText should not be called for invalid JSON');
+    }) as never,
+  });
+
+  try {
+    const request = new NextRequest(
+      'http://localhost:3000/api/chat/completions',
+      {
+        body: '{not json',
+        method: 'POST',
+      },
+    );
+    const response = await handler(request);
+    const body = await getJson(response);
+
+    assert(
+      response.status === 400,
+      'POST /api/chat/completions should reject invalid JSON',
+    );
+    assert(
+      body.error === 'Invalid JSON body',
+      'POST /api/chat/completions should explain invalid JSON',
+    );
+  } finally {
+    if (originalApiKey === undefined) {
+      delete process.env.NEXT_LLM_API_KEY;
+    } else {
+      process.env.NEXT_LLM_API_KEY = originalApiKey;
+    }
+    if (originalUrl === undefined) {
+      delete process.env.NEXT_LLM_URL;
+    } else {
+      process.env.NEXT_LLM_URL = originalUrl;
+    }
+  }
+}
+
+async function verifyChatCompletionsSseDone() {
+  const { createChatCompletionsHandler } =
+    await import('../app/api/chat/completions/route');
+  const originalApiKey = process.env.NEXT_LLM_API_KEY;
+  const originalUrl = process.env.NEXT_LLM_URL;
+  process.env.NEXT_LLM_API_KEY = 'test-key';
+  process.env.NEXT_LLM_URL = 'https://example.test/v1/chat/completions';
+
+  let capturedBaseUrl: string | undefined;
+  let capturedModelId: string | undefined;
+  let capturedMessages: unknown;
+
+  const handler = createChatCompletionsHandler({
+    createOpenAIClient: ((options: { baseURL?: string }) => {
+      capturedBaseUrl = options.baseURL;
+      return (modelId: string) => {
+        capturedModelId = modelId;
+        return { modelId };
+      };
+    }) as never,
+    streamTextImpl: ((options: { messages?: unknown }) => {
+      capturedMessages = options.messages;
+      return {
+        textStream: (async function* () {
+          yield 'hello';
+          yield ' world';
+        })(),
+      };
+    }) as never,
+  });
+
+  try {
+    const request = new NextRequest(
+      'http://localhost:3000/api/chat/completions',
+      {
+        body: JSON.stringify({
+          model: 'caller-model-ignored-for-routing',
+          messages: [{ role: 'user', content: 'Hi' }],
+        }),
+        method: 'POST',
+      },
+    );
+    const response = await handler(request);
+    const text = await response.text();
+
+    assert(
+      response.status === 200,
+      'POST /api/chat/completions should return 200 for a valid request',
+    );
+    assert(
+      response.headers.get('content-type') === 'text/event-stream',
+      'POST /api/chat/completions should return SSE content type',
+    );
+    assert(
+      capturedBaseUrl === 'https://example.test/v1',
+      'POST /api/chat/completions should pass base URL without /chat/completions',
+    );
+    assert(
+      capturedModelId === 'gpt-4o',
+      'POST /api/chat/completions should route to the pinned server model',
+    );
+    assert(
+      JSON.stringify(capturedMessages) ===
+        JSON.stringify([{ role: 'user', content: 'Hi' }]),
+      'POST /api/chat/completions should pass request messages to streamText',
+    );
+    assert(
+      text.includes('data: [DONE]'),
+      'POST /api/chat/completions should terminate with [DONE]',
+    );
+    assert(
+      text.includes('"content":"hello"') && text.includes('"content":" world"'),
+      'POST /api/chat/completions should stream text chunks as OpenAI-compatible deltas',
+    );
+  } finally {
+    if (originalApiKey === undefined) {
+      delete process.env.NEXT_LLM_API_KEY;
+    } else {
+      process.env.NEXT_LLM_API_KEY = originalApiKey;
+    }
+    if (originalUrl === undefined) {
+      delete process.env.NEXT_LLM_URL;
+    } else {
+      process.env.NEXT_LLM_URL = originalUrl;
+    }
+  }
+}
+
 async function verifyInviteAgentValidation() {
   const { POST: inviteAgent } = await import('../app/api/invite-agent/route');
   const request = new NextRequest('http://localhost:3000/api/invite-agent', {
@@ -224,6 +448,10 @@ async function verifyStopConversationSuccess() {
 
 async function main() {
   await verifyGenerateAgoraTokenRoute();
+  await verifyGenerateAgoraTokenReplacesZeroUid();
+  await verifyChatCompletionsMissingEnv();
+  await verifyChatCompletionsInvalidJson();
+  await verifyChatCompletionsSseDone();
   await verifyInviteAgentValidation();
   await verifyInviteAgentSuccess();
   await verifyStopConversationValidation();

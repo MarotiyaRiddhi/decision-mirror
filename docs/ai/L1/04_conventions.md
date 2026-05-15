@@ -23,7 +23,7 @@
 
 ## Hook Ownership Rules
 
-These come from `components/AGENTS.md` and the comments in `ConversationComponent.tsx`:
+These come from the maintained progressive disclosure docs and comments in `ConversationComponent.tsx`:
 
 - `useJoin` owns `client.leave()` — never call it manually.
 - `useLocalMicrophoneTrack` owns the track lifecycle — do not call `.close()` manually.
@@ -72,7 +72,7 @@ useEffect(() => {
 ## Testing
 
 - There is no Vitest/Jest harness. Behavioral coverage lives in `scripts/verify-api-contracts.ts` (route contracts) and in lint/typecheck.
-- Adding a new API route requires extending `scripts/verify-api-contracts.ts` — see `app/api/AGENTS.md`.
+- Adding a new API route requires extending `scripts/verify-api-contracts.ts`.
 
 ## Module Discipline
 

@@ -12,7 +12,7 @@ This quickstart issues **one** token string per request that carries both RTC an
 
 ```ts
 const EXPIRATION_TIME_IN_SECONDS = 3600;
-const uid = parsedUidFromQuery ?? Math.floor(Math.random() * 10000);
+const uid = parsedUidFromQuery > 0 ? parsedUidFromQuery : generateUid();
 const channel = parsedChannelFromQuery ?? randomChannelName();
 
 const token = RtcTokenBuilder.buildTokenWithRtm(
@@ -31,6 +31,7 @@ return NextResponse.json({ token, uid: String(uid), channel });
 Notes:
 
 - `uid` is stringified in the response but the browser parses it numerically before calling `useJoin`.
+- `uid=0`, negative UIDs, and missing UIDs all generate a non-zero UID. Agora RTC accepts `0` as auto-assign, but RTM login needs the token subject to match a concrete non-zero user ID.
 - `channel` is generated server-side when the caller omits it. The browser uses whatever the route returns.
 - `EXPIRATION_TIME_IN_SECONDS` is 1 hour — keep it aligned with the `expiresIn: ExpiresIn.hours(1)` value in `invite-agent/route.ts`.
 
@@ -72,7 +73,7 @@ Why two fetches?
 `scripts/verify-api-contracts.ts` mocks `RtcTokenBuilder.buildTokenWithRtm` to return a sentinel string and asserts:
 
 - `200` status.
-- Response includes `token`, `uid`, `channel`.
+- Response includes `token`, `uid`, `channel`, and `uid=0` returns a generated non-zero UID.
 - The mock was called with the expected arity (8 args).
 
 If you change the builder signature or expiry, update the harness.

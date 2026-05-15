@@ -83,7 +83,7 @@ This is the fallback for issues like `VP_REGISTER_FAIL` / `VP_REGISTER_DUPLICATE
 
 ## What `ConvoTextStream` Does Not Do
 
-`DOCS/TEXT_STREAMING_GUIDE.md` describes the `ConvoTextStream` uikit component. The current app uses `QuickstartTranscriptPanel` instead, which is a thinner custom renderer. If you re-introduce `ConvoTextStream`:
+`docs/TEXT_STREAMING_GUIDE.md` describes the `ConvoTextStream` uikit component. The current app uses `QuickstartTranscriptPanel` instead, which is a thinner custom renderer. If you re-introduce `ConvoTextStream`:
 
 - Make sure `messageList` includes `INTERRUPTED` turns — `ConvoTextStream` auto-opens only when there is at least one non-`IN_PROGRESS` turn.
 - Keep the uid normalization step — `ConvoTextStream` relies on `uid` to choose sides.

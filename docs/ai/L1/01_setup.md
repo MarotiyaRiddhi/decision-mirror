@@ -82,7 +82,7 @@ If any check fails it logs the failure and exits with `1`. The script never writ
 
 ## Where Verification Lives
 
-- `scripts/verify-api-contracts.ts` dynamically imports three routes — `generate-agora-token`, `invite-agent`, `stop-conversation` — monkey-patches `RtcTokenBuilder`, `Agent.prototype.createSession`, and `AgoraClient.prototype.stopAgent`, and asserts the status code and JSON body of each. **`/api/chat/completions` is not covered** today; if you wire it into the live flow, extend the harness.
+- `scripts/verify-api-contracts.ts` dynamically imports all API routes, monkey-patches Agora SDK boundaries, and asserts status/body behavior. It covers token generation, `uid=0` replacement, invite-agent, stop-conversation, and `/api/chat/completions` env / invalid JSON / SSE `[DONE]` behavior.
 - Adding a new route requires extending this file or `pnpm run verify:api` will skip it.
 - ESLint and `tsc --noEmit` run with no network access.
 - `next build` is the slowest gate; expect 30-60 seconds on a warm cache.

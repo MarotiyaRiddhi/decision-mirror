@@ -14,7 +14,6 @@ app/                     # Next.js App Router
     invite-agent/route.ts
     stop-conversation/route.ts
     chat/completions/route.ts
-    AGENTS.md            # Module guide (route ownership + contract verification)
 components/              # UI + RTC/RTM lifecycle
   LandingPage.tsx
   ConversationComponent.tsx
@@ -30,14 +29,12 @@ components/              # UI + RTC/RTM lifecycle
   ui/                    # shadcn-style primitives
     button.tsx
     dropdown-menu.tsx
-  AGENTS.md              # Module guide (hook ownership, isReady)
 hooks/
   use-mobile.tsx         # useIsMobile — currently unused
 lib/
   agora.ts               # DEFAULT_AGENT_UID = 123456
   conversation.ts        # Transcript normalization + visualizer state mapping
   utils.ts               # cn() (clsx + tailwind-merge)
-  AGENTS.md              # Module guide
 scripts/
   doctor.mjs             # Local prereq + env gate
   verify-api-contracts.ts # Route contract regression harness
@@ -48,7 +45,7 @@ types/
   env.d.ts               # Minimal ProcessEnv shape
   jsx.d.ts               # JSX intrinsic augmentation
 public/                  # Static assets (logos, manifests)
-DOCS/                    # Long-form guides
+docs/                    # Long-form guides
   GUIDE.md               # Build walkthrough (partially historical)
   TEXT_STREAMING_GUIDE.md # Transcript + RTM architecture
 ```
@@ -79,7 +76,7 @@ DOCS/                    # Long-form guides
 - `app/api/` owns server-only logic and any vendor key reads.
 - `lib/` owns pure helpers safe for both server and client.
 - `scripts/` owns verification gates that block `pnpm run verify`.
-- Module-level `AGENTS.md` files exist in `app/api/`, `components/`, and `lib/` for narrower task guidance.
+- Repo-root `AGENTS.md` plus `docs/ai/` are the maintained agent-facing guidance. Module-level `AGENTS.md` files are not present.
 
 ## What's Not in the Repo
 

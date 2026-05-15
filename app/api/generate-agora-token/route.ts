@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const uidStr = searchParams.get('uid');
   const parsedUid = uidStr ? parseInt(uidStr, 10) : Number.NaN;
-  const uid = Number.isNaN(parsedUid)
+  const uid = Number.isNaN(parsedUid) || parsedUid <= 0
     ? Math.floor(Math.random() * 9_999_000) + 1000
     : parsedUid;
   const channelName = searchParams.get('channel') || generateChannelName();

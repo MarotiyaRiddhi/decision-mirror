@@ -11,7 +11,7 @@
 | `/api/stop-conversation`      | POST   | `{ agent_id }` (`StopConversationRequest`)                    | `{ success: true }` or `{ success: true, state: 'already-stopping' }` | `400 { error: 'agent_id is required' }` / `500 { error }`        |
 | `/api/chat/completions`       | POST   | OpenAI-compatible body; `messages` consumed, `model` ignored  | `text/event-stream` SSE chunks then `data: [DONE]`         | `400 { error: 'Invalid JSON body' }` / `500 { error: 'NEXT_LLM_API_KEY and NEXT_LLM_URL must be set' }` |
 
-> `chat/completions` is **not** covered by `scripts/verify-api-contracts.ts`. The other three routes are. Extend the harness if you wire `chat/completions` into the live flow.
+> `chat/completions` is covered by `scripts/verify-api-contracts.ts` for missing env, invalid JSON, base URL normalization, pinned model routing, streamed chunks, and final `data: [DONE]`.
 
 Types live in `types/conversation.ts`: `AgoraTokenData`, `ClientStartRequest`, `StopConversationRequest`, `AgentResponse`, `AgoraRenewalTokens`, `ConversationComponentProps`.
 

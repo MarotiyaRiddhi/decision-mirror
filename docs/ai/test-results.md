@@ -50,8 +50,8 @@ Repo: `agent-quickstart-nextjs`
 
 ## Recommended Fixes (Applied)
 
-- [x] **L1/01_setup.md**: clarify that `scripts/verify-api-contracts.ts` covers only `generate-agora-token`, `invite-agent`, and `stop-conversation` — not `/api/chat/completions`.
-- [x] **L1/06_interfaces.md**: add a footnote next to `/api/chat/completions` noting the harness does not cover it.
+- [x] **L1/01_setup.md**: clarify that `scripts/verify-api-contracts.ts` covers token generation, `uid=0` replacement, invite-agent, stop-conversation, and `/api/chat/completions`.
+- [x] **L1/06_interfaces.md**: document `/api/chat/completions` harness coverage for env validation, bad JSON, and SSE `[DONE]`.
 - [x] **L2/transcript_pipeline.md**: correct the `AGENT_METRICS` storage description — `ConversationComponent` appends and slices a bounded array (last 8 items); `QuickstartPipelineMetrics` rebuilds a `Map<string, QuickstartAgentMetric>` keyed on lowercased `type` each render.
 
 ## Review Fix Retest
@@ -60,5 +60,5 @@ Retested: 2026-05-15
 
 | Finding                                                | Source checked                                                                                          | Docs changed                                                          | Result | Notes                                          |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------ | ---------------------------------------------- |
-| Q3 verify-api-contracts scope wording                  | `scripts/verify-api-contracts.ts`                                                                       | `L1/01_setup.md`, `L1/06_interfaces.md`                               | Pass   | Three-route coverage and chat-route exclusion now explicit. |
+| Q3 verify-api-contracts scope wording                  | `scripts/verify-api-contracts.ts`                                                                       | `L1/01_setup.md`, `L1/06_interfaces.md`                               | Pass   | Token, invite, stop, and chat-completions coverage now explicit. |
 | L2 `AGENT_METRICS` storage description                 | `components/ConversationComponent.tsx`, `components/QuickstartPipelineMetrics.tsx`                       | `L2/transcript_pipeline.md`                                            | Pass   | Array + `slice(-N)`, Map keyed by `type` documented correctly. |

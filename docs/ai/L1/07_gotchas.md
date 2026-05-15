@@ -22,6 +22,10 @@ The toolkit emits `uid="0"` for the local user's turns. `lib/conversation.ts` `n
 
 `/api/generate-agora-token` MUST use `RtcTokenBuilder.buildTokenWithRtm`. A standard RTC-only token does **not** grant RTM access, and RTM login will fail with no obvious error. `scripts/verify-api-contracts.ts` mocks this exact symbol; do not swap to `buildTokenWithUid` or similar.
 
+## `uid=0` Is Replaced Server-Side
+
+Agora RTC accepts `uid=0` as auto-assign, but RTM login needs the token subject to match a concrete user ID. `/api/generate-agora-token` replaces missing, zero, and negative UIDs with a generated UID before calling `buildTokenWithRtm`.
+
 ## Tailwind Must Scan UIKit `dist`
 
 `tailwind.config.ts` `content` includes `./node_modules/agora-agent-uikit/dist/**/*.{js,mjs}`. Removing it strips uikit's runtime Tailwind classes and the visualizer + buttons render unstyled.
@@ -36,13 +40,8 @@ Use `turnDetection.config.start_of_speech` and `turnDetection.config.end_of_spee
 
 ## Doc Drift to Watch For
 
-- `DOCS/TEXT_STREAMING_GUIDE.md` mentions `ConvoTextStream` and "uid=0 token" renewal. The current code uses `QuickstartTranscriptPanel` and renews with `agoraData.uid`. Treat the doc as background reading, not implementation truth.
-- `DOCS/GUIDE.md` has scaffolding excerpts older than the current `components/` layout.
-- Root `AGENTS.md` and `app/api/AGENTS.md` reference `chat/route.ts`; the actual file is `app/api/chat/completions/route.ts`.
-
-## Missing Static Assets
-
-`app/layout.tsx` and `public/site.webmanifest` reference favicon PNGs (`favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-*.png`) that are not in `public/`. Adding the files is fine; do not change `layout.tsx` to drop the references unless you also update the manifest.
+- `docs/TEXT_STREAMING_GUIDE.md` mentions `ConvoTextStream` and "uid=0 token" renewal. The current code uses `QuickstartTranscriptPanel` and renews with `agoraData.uid`. Treat the doc as background reading, not implementation truth.
+- `docs/GUIDE.md` has scaffolding excerpts older than the current `components/` layout.
 
 ## Unused Tree Branches
 

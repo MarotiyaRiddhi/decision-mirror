@@ -61,7 +61,6 @@ Token renewal is automatic — `ConversationComponent` listens for the RTC `toke
 If you change `components/`, `app/api/`, or `lib/` behavior in a meaningful way, also update:
 
 - `README.md`
-- The matching module `AGENTS.md` (`app/api/AGENTS.md`, `components/AGENTS.md`, `lib/AGENTS.md`)
 - `docs/GUIDE.md` or `docs/TEXT_STREAMING_GUIDE.md` if the user-facing flow changed
 - The relevant file in `docs/ai/L1/` and the `Last Reviewed` field in `docs/ai/L0_repo_card.md`
 
@@ -74,7 +73,7 @@ If you change `components/`, `app/api/`, or `lib/` behavior in a meaningful way,
 
 ## Refresh Static Assets
 
-`public/site.webmanifest` and `app/layout.tsx` reference favicon PNGs that are not in `public/` today. To add them:
+`public/site.webmanifest` and `app/layout.tsx` reference favicon PNGs that are present in `public/` today. To refresh them:
 
 1. Place the new files under `public/` (the names already referenced are `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`).
 2. Confirm `app/layout.tsx` icon block still matches.
