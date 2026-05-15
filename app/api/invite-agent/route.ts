@@ -115,7 +115,12 @@ export async function POST(request: NextRequest) {
       // Required for browser RTM events:
       // - data_channel: 'rtm' enables RTM delivery path for state/metrics/errors
       // - enable_error_message emits AGENT_ERROR payloads
-      parameters: { data_channel: 'rtm', enable_error_message: true },
+      // - enable_metrics emits AGENT_METRICS latency payloads
+      parameters: {
+        data_channel: 'rtm',
+        enable_error_message: true,
+        enable_metrics: true,
+      },
     })
       .withStt(
         new DeepgramSTT({

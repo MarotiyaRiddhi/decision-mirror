@@ -17,14 +17,16 @@ export async function GET(request: NextRequest) {
   if (!APP_ID || !APP_CERTIFICATE) {
     return NextResponse.json(
       { error: 'Agora credentials are not set' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
   const { searchParams } = new URL(request.url);
-  const uidStr = searchParams.get('uid') || '0';
-  const parsedUid = parseInt(uidStr, 10);
-  const uid = isNaN(parsedUid) ? 0 : parsedUid;
+  const uidStr = searchParams.get('uid');
+  const parsedUid = uidStr ? parseInt(uidStr, 10) : Number.NaN;
+  const uid = Number.isNaN(parsedUid)
+    ? Math.floor(Math.random() * 9_999_000) + 1000
+    : parsedUid;
   const channelName = searchParams.get('channel') || generateChannelName();
 
   const expirationTime =
@@ -36,10 +38,10 @@ export async function GET(request: NextRequest) {
       APP_ID,
       APP_CERTIFICATE,
       channelName,
-      uid,
+      uid.toString(),
       RtcRole.PUBLISHER,
       expirationTime,
-      expirationTime
+      expirationTime,
     );
     // console.log('Token generated successfully (RTC + RTM)');
 
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
         error: 'Failed to generate Agora token',
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
