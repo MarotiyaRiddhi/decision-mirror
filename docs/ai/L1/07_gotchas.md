@@ -32,7 +32,7 @@ Use `turnDetection.config.start_of_speech` and `turnDetection.config.end_of_spee
 
 ## Audio PTS Parameter
 
-`ConversationComponent` sets `AgoraRTC.setParameter('ENABLE_AUDIO_PTS', true)` at module scope. This is intentional — it improves transcript timing. If you remove or duplicate the call, transcripts may desync or warn in dev.
+`ConversationComponent` sets `AgoraRTC.setParameter('ENABLE_AUDIO_PTS', true)` inside a `useEffect([client])`. This is intentional — it improves transcript timing and must run after the RTC client exists. If you remove or duplicate the call, transcripts may desync or warn in dev.
 
 ## Doc Drift to Watch For
 
@@ -57,9 +57,9 @@ The route compiles and is contract-tested, but `components/` does not call it. V
 
 `postcss.config.mjs` only lists the `tailwindcss` plugin. `autoprefixer` is a `package.json` dependency but is not enabled. If you need vendor prefixes, add `autoprefixer` to `postcss.config.mjs` rather than installing it again.
 
-## RTC Module-Level Parameters
+## RTC Effect-Level Parameters
 
-`ConversationComponent` calls `AgoraRTC.setParameter('ENABLE_AUDIO_PTS', true)` at module scope. Module-scope side effects bypass StrictMode but also bypass `useEffect` cleanup — any new `AgoraRTC.setParameter` belongs alongside this one, not inside a component effect.
+`ConversationComponent` calls `AgoraRTC.setParameter('ENABLE_AUDIO_PTS', true)` inside `useEffect([client])`. The call uses optional chaining (`setParameter?.`) so it is safe on SDK versions that do not expose the method. If you need additional `AgoraRTC.setParameter` calls, place them in the same effect alongside this one.
 
 ## Idempotent Stop Path
 

@@ -4,19 +4,19 @@ This guide is for coding agents making changes in `agent-quickstart-nextjs`.
 
 ## How to Load
 
-This repository uses progressive disclosure documentation. Docs live under `DOCS/ai/` in three levels (the uppercase `DOCS/` directory is the long-standing convention in this repo; the new AI docs were placed there to keep paths consistent on case-sensitive filesystems).
+This repository uses progressive disclosure documentation. Docs live under `docs/ai/` in three levels.
 
-1. Read [DOCS/ai/L0_repo_card.md](DOCS/ai/L0_repo_card.md) to identify the repo.
-2. Load ALL 8 files in [DOCS/ai/L1/](DOCS/ai/L1/). They are small — load all upfront.
-3. Follow L2 deep-dive links only when L1 isn't detailed enough. The index is at [DOCS/ai/L1/L2/_index.md](DOCS/ai/L1/L2/_index.md).
+1. Read [docs/ai/L0_repo_card.md](docs/ai/L0_repo_card.md) to identify the repo.
+2. Load ALL 8 files in [docs/ai/L1/](docs/ai/L1/). They are small — load all upfront.
+3. Follow L2 deep-dive links only when L1 isn't detailed enough. The index is at [docs/ai/L1/L2/_index.md](docs/ai/L1/L2/_index.md).
 
-The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canonical contributor handbook for hands-on work; the `DOCS/ai/` tree is the structured summary used by AI agents.
+The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canonical contributor handbook for hands-on work; the `docs/ai/` tree is the structured summary used by AI agents.
 
 ## Start Here
 
 - Read [README.md](./README.md) for setup, commands, verification, and deployment.
-- Use [DOCS/GUIDE.md](./DOCS/GUIDE.md) for the long-form build walkthrough.
-- Use [DOCS/TEXT_STREAMING_GUIDE.md](./DOCS/TEXT_STREAMING_GUIDE.md) for transcript and RTM behavior.
+- Use [docs/GUIDE.md](./docs/GUIDE.md) for the long-form build walkthrough.
+- Use [docs/TEXT_STREAMING_GUIDE.md](./docs/TEXT_STREAMING_GUIDE.md) for transcript and RTM behavior.
 - Use module guides only when working inside that module:
   - [app/api/AGENTS.md](./app/api/AGENTS.md)
   - [components/AGENTS.md](./components/AGENTS.md)
@@ -52,7 +52,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - UI and RTC/RTM client lifecycle live in `components`.
 - Browser-facing API routes live in `app/api`.
 - Shared constants and transcript normalization live in `lib`.
-- If a workflow, request contract, or ownership boundary changes, update `README.md`, `DOCS/GUIDE.md`, `DOCS/TEXT_STREAMING_GUIDE.md`, and this file in the same change.
+- If a workflow, request contract, or ownership boundary changes, update `README.md`, `docs/GUIDE.md`, `docs/TEXT_STREAMING_GUIDE.md`, and this file in the same change.
 
 ## Key Files
 
@@ -130,7 +130,7 @@ useEffect(() => {
 - Keep token generation on `RtcTokenBuilder.buildTokenWithRtm`.
 - Keep transcript UID remapping aligned with the toolkit sentinel behavior.
 - Do not require third-party vendor API keys unless the code actually introduces a BYOK provider path.
-- Keep README, `DOCS/GUIDE.md`, and `DOCS/TEXT_STREAMING_GUIDE.md` aligned with implementation changes.
+- Keep README, `docs/GUIDE.md`, and `docs/TEXT_STREAMING_GUIDE.md` aligned with implementation changes.
 
 ## Commands
 
@@ -181,9 +181,9 @@ Before finishing a change:
 
 1. Run the narrowest relevant verification command.
 2. For shipped app/runtime changes, ensure `pnpm run verify` passes.
-3. If you changed files in `components/` or `app/api/`, verify that `DOCS/GUIDE.md`, `DOCS/TEXT_STREAMING_GUIDE.md`, `README.md`, and this file still match the implementation.
+3. If you changed files in `components/` or `app/api/`, verify that `docs/GUIDE.md`, `docs/TEXT_STREAMING_GUIDE.md`, `README.md`, and this file still match the implementation.
 4. Update root README and affected docs when workflow, request contracts, architecture, or environment guidance changes.
-5. If the change touches workflows, interfaces, gotchas, or security details, update the matching file under [DOCS/ai/L1/](DOCS/ai/L1/) and bump `Last Reviewed` in [DOCS/ai/L0_repo_card.md](DOCS/ai/L0_repo_card.md).
+5. If the change touches workflows, interfaces, gotchas, or security details, update the matching file under [docs/ai/L1/](docs/ai/L1/) and bump `Last Reviewed` in [docs/ai/L0_repo_card.md](docs/ai/L0_repo_card.md).
 
 ## Git Conventions
 
@@ -213,8 +213,8 @@ Before finishing a change:
 
 | Command         | When to use                                                  |
 | --------------- | ------------------------------------------------------------ |
-| generate docs   | No `DOCS/ai/` directory exists yet                           |
+| generate docs   | No `docs/ai/` directory exists yet                           |
 | update docs     | Code changed since the `Last Reviewed` date in L0            |
-| test docs       | Verify docs give agents the right context (writes `DOCS/ai/test-results.md`) |
+| test docs       | Verify docs give agents the right context (writes `docs/ai/test-results.md`) |
 
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.

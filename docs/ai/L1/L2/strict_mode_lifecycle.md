@@ -46,18 +46,28 @@ The RTC client lives inside a dynamically imported `AgoraRTCProvider`:
 
 ## AgoraVoiceAI Initialization Order
 
+`AgoraVoiceAI.init` is **async** and must be called with `await`. Because `useEffect` callbacks cannot be async directly, wrap the call in an IIFE. Use a `cancelled` flag to discard the result if the effect was cleaned up before `init` resolved.
+
 ```tsx
 useEffect(() => {
   if (!isReady || !joinSuccess) return;
-  ai.current = new AgoraVoiceAI({
-    rtcEngine: client,
-    rtmConfig: { rtmEngine: rtmClient },
-    renderMode: TranscriptHelperMode.TEXT,
-  });
-  // attach listeners + subscribeMessage(channel)
+  let cancelled = false;
+  (async () => {
+    const ai = await AgoraVoiceAI.init({
+      rtcEngine: client,
+      rtmConfig: { rtmEngine: rtmClient },
+      renderMode: TranscriptHelperMode.TEXT,
+      enableLog: true,
+    });
+    if (cancelled) return;
+    // attach listeners + ai.subscribeMessage(channel)
+  })();
   return () => {
-    ai.current?.disconnect();
-    ai.current = undefined;
+    cancelled = true;
+    try {
+      const ai = AgoraVoiceAI.getInstance();
+      if (ai) { ai.unsubscribe(); ai.destroy(); }
+    } catch {}
   };
 }, [isReady, joinSuccess]);
 ```
@@ -66,6 +76,7 @@ Critical points:
 
 - The effect depends on `isReady` AND `joinSuccess`. Both must be true.
 - Once `isReady` is true, it does not flip back to false during the same real mount. React does not re-run this effect for later changes to `joinSuccess` going `false → true → false`.
+- There is no `disconnect()` method — cleanup is `ai.unsubscribe()` followed by `ai.destroy()`.
 - The cleanup tears down `AgoraVoiceAI` so the next real mount starts clean.
 
 ## Hook Ownership Rules (do not break)

@@ -17,14 +17,20 @@ All of the managed agent configuration is built in `app/api/invite-agent/route.t
 
 ## The Agent Builder Chain
 
+`AgoraClient` is constructed first — it carries the region and credentials for all API calls. `area` belongs here, not on the session.
+
 ```ts
+const client = new AgoraClient({ area: Area.US, appId, appCertificate });
+
 const agent = new Agent({
+  name: `conversation-${Date.now()}-${randomHex}`,
   instructions: ADA_PROMPT,
   greeting: process.env.NEXT_AGENT_GREETING ?? GREETING,
   failureMessage: 'Please wait a moment.',
   maxHistory: 50,
   turnDetection: {
     config: {
+      speech_threshold: 0.5,
       start_of_speech: { /* VAD on-start params */ },
       end_of_speech:   { /* VAD on-end params */ },
     },
@@ -36,8 +42,14 @@ const agent = new Agent({
     enable_metrics: true,
   },
 })
-  .withStt(new DeepgramSTT({ model: 'nova-3' }))
-  .withLlm(new OpenAI({ model: 'gpt-4o-mini' }))
+  .withStt(new DeepgramSTT({ model: 'nova-3', language: 'en' }))
+  .withLlm(new OpenAI({
+    model: 'gpt-4o-mini',
+    greetingMessage: GREETING,
+    failureMessage: 'Please wait a moment.',
+    maxHistory: 15,
+    params: { max_tokens: 1024, temperature: 0.7, top_p: 0.95 },
+  }))
   .withTts(new MiniMaxTTS({
     model: 'speech_2_6_turbo',
     voiceId: 'English_captivating_female1',
@@ -46,22 +58,28 @@ const agent = new Agent({
 
 ## Session Options
 
+`createSession` takes the `AgoraClient` as its first argument, then the session options object. `session.start()` is called separately and returns the `agentId`.
+
 ```ts
-await agent.createSession({
-  channelName: channel_name,
+const session = agent.createSession(client, {
+  channel: channel_name,
+  agentUid,
   remoteUids: [requester_id],
   idleTimeout: 30,
   expiresIn: ExpiresIn.hours(1),
-  area: Area.US,
+  debug: false,
 });
+const agentId = await session.start();
 ```
 
-| Option        | Effect                                                                                 |
-| ------------- | -------------------------------------------------------------------------------------- |
-| `remoteUids`  | Restricts the agent to the requester's UID — protects against cross-channel sniping.   |
-| `idleTimeout` | Seconds of silence before the session ends.                                            |
-| `expiresIn`   | Hard ceiling on session length, mirrors the 1-hour RTC token.                          |
-| `area`        | Region for the managed agent — change only if your project provisions a different one. |
+| Option        | Effect                                                                               |
+| ------------- | ------------------------------------------------------------------------------------ |
+| `channel`     | The RTC channel name the agent joins.                                                |
+| `agentUid`    | The UID the agent occupies in the channel — must match `NEXT_PUBLIC_AGENT_UID`.      |
+| `remoteUids`  | Restricts the agent to the requester's UID — protects against cross-channel sniping. |
+| `idleTimeout` | Seconds of silence before the session ends.                                          |
+| `expiresIn`   | Hard ceiling on session length, mirrors the 1-hour RTC token.                        |
+| `debug`       | Logs Agora REST API calls to the console when `true`.                                |
 
 ## Editing Each Surface
 
@@ -83,7 +101,7 @@ Replace the `DeepgramSTT` constructor. To use Deepgram with a BYOK key, set `NEX
 
 ### Swap the LLM
 
-Replace `OpenAI` with another LLM class from `agora-agent-server-sdk`. For a custom URL, point the constructor at `process.env.NEXT_LLM_URL` and pass `apiKey: process.env.NEXT_LLM_API_KEY`. Wiring through `app/api/chat/completions/route.ts` is documented in `DOCS/ai/L1/05_workflows.md`.
+Replace `OpenAI` with another LLM class from `agora-agent-server-sdk`. For a custom URL, point the constructor at `process.env.NEXT_LLM_URL` and pass `apiKey: process.env.NEXT_LLM_API_KEY`. Wiring through `app/api/chat/completions/route.ts` is documented in `docs/ai/L1/05_workflows.md`.
 
 ### Swap the TTS
 

@@ -62,8 +62,8 @@ If you change `components/`, `app/api/`, or `lib/` behavior in a meaningful way,
 
 - `README.md`
 - The matching module `AGENTS.md` (`app/api/AGENTS.md`, `components/AGENTS.md`, `lib/AGENTS.md`)
-- `DOCS/GUIDE.md` or `DOCS/TEXT_STREAMING_GUIDE.md` if the user-facing flow changed
-- The relevant file in `DOCS/ai/L1/` and the `Last Reviewed` field in `DOCS/ai/L0_repo_card.md`
+- `docs/GUIDE.md` or `docs/TEXT_STREAMING_GUIDE.md` if the user-facing flow changed
+- The relevant file in `docs/ai/L1/` and the `Last Reviewed` field in `docs/ai/L0_repo_card.md`
 
 ## Roll Back a Bad Deploy
 
