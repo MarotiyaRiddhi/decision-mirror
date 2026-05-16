@@ -17,10 +17,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - Read [README.md](./README.md) for setup, commands, verification, and deployment.
 - Use [docs/GUIDE.md](./docs/GUIDE.md) for the long-form build walkthrough.
 - Use [docs/TEXT_STREAMING_GUIDE.md](./docs/TEXT_STREAMING_GUIDE.md) for transcript and RTM behavior.
-- Use module guides only when working inside that module:
-  - [app/api/AGENTS.md](./app/api/AGENTS.md)
-  - [components/AGENTS.md](./components/AGENTS.md)
-  - [lib/AGENTS.md](./lib/AGENTS.md)
+- For layout and responsibilities inside `components/`, `app/api/`, and `lib/`, use [docs/ai/L1/03_code_map.md](docs/ai/L1/03_code_map.md) and [docs/ai/L1/02_architecture.md](docs/ai/L1/02_architecture.md).
 
 ## Current System Shape
 
@@ -59,7 +56,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - `app/api/generate-agora-token/route.ts`: issues RTC + RTM tokens for the browser user.
 - `app/api/invite-agent/route.ts`: starts the managed agent session; edit here for system prompt, VAD, model, or voice changes.
 - `app/api/stop-conversation/route.ts`: stops the agent session.
-- `app/api/chat/route.ts`: optional text chat route.
+- `app/api/chat/completions/route.ts`: optional OpenAI-compatible SSE proxy for a custom LLM (not wired by default).
 - `components/LandingPage.tsx`: session bootstrap, RTM setup, provider wiring, and conversation lifecycle.
 - `components/ConversationComponent.tsx`: RTC join, mic publication, `AgoraVoiceAI` init, transcript state, and renewals.
 - `components/QuickstartConversationLayout.tsx`: in-call header, transcript rail, and controls dock.

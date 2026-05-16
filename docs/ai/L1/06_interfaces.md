@@ -61,7 +61,7 @@ From `app/api/invite-agent/route.ts`:
 | Session `idleTimeout`            | `30`                                                                          |
 | Session `expiresIn`              | `ExpiresIn.hours(1)`                                                          |
 | `remoteUids`                     | `[requester_id]`                                                              |
-| `area`                           | `Area.US`                                                                     |
+| `area` (on `AgoraClient`)        | `Area.US` — belongs to `new AgoraClient({...})`, not `createSession`.        |
 
 ## Browser-Side Contracts
 
