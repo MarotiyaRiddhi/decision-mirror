@@ -1,82 +1,81 @@
 # 07 Gotchas
 
-> Concrete pitfalls that have been hit before. Read this before refactoring real-time code.
+> High-impact pitfalls that regularly break session startup, transcript rendering, or lifecycle cleanup.
 
-## StrictMode Double-Mount
+## Critical Runtime Pitfalls
 
-React 19 StrictMode mounts, unmounts, and remounts components in dev. RTC hooks initialized eagerly would join twice, publish twice, and `AgoraVoiceAI.init` would race itself.
+- Using RTC-only token generation breaks RTM login and transcript/state events.
+- Removing `isReady` guard can trigger StrictMode double-initialization and duplicate/missing tracks.
+- Manual `client.leave()` conflicts with `useJoin` cleanup contract.
+- Manual `localMicrophoneTrack.close()` conflicts with hook-owned lifecycle.
 
-- `useJoin` and `useLocalMicrophoneTrack` MUST be gated by `isReady` (`components/ConversationComponent.tsx`).
-- The RTC `client` MUST be held in `useRef` inside a dynamic `AgoraRTCProvider` — switching to `useMemo` re-creates the client and breaks `useJoin`'s cleanup.
-- Never set `reactStrictMode: false` in `next.config.mjs` as a workaround.
+## Transcript Pitfalls
 
-## `uid="0"` Sentinel
+- Not remapping toolkit `uid="0"` causes user turns to render as agent turns.
+- Dropping `INTERRUPTED` from message history can keep transcript panel from auto-opening on first interrupted turn.
+- Skipping punctuation/timestamp normalization creates inconsistent transcript readability and issue time ordering.
 
-The toolkit emits `uid="0"` for the local user's turns. `lib/conversation.ts` `normalizeTranscript` remaps `'0'` → `String(client.uid)` before the transcript renders. Bypassing this remap (or returning early before it runs) puts user speech on the agent's side of the transcript.
+## Agent Startup Pitfalls
 
-## `INTERRUPTED` Turns Must Stay in the List
+- Missing `NEXT_PUBLIC_AGORA_APP_ID`/`NEXT_AGORA_APP_CERTIFICATE` yields hard 500s on token/invite/stop routes.
+- Mismatch between `NEXT_PUBLIC_AGENT_UID` and invite route `agentUid` causes agent presence confusion.
+- RTM subscription failures may only surface through SAL status or raw signaling fallback events.
 
-`getMessageList` only filters `TurnStatus.IN_PROGRESS`. If you also exclude `INTERRUPTED` turns, an interrupted first turn means `messageList` is empty and the transcript panel never opens.
+## Frontend Lifecycle Pitfalls
 
-## Token Builder Requirement
+- Initializing toolkit before `joinSuccess` often causes missing subscriptions.
+- Tying mic track creation directly to mute state can break visualizer audio graph.
+- Failing to teardown RTM client on session end leaks subscriptions and stale events.
 
-`/api/generate-agora-token` MUST use `RtcTokenBuilder.buildTokenWithRtm`. A standard RTC-only token does **not** grant RTM access, and RTM login will fail with no obvious error. `scripts/verify-api-contracts.ts` mocks this exact symbol; do not swap to `buildTokenWithUid` or similar.
+## Docs/Process Pitfalls
 
-## `uid=0` Is Replaced Server-Side
+- Changing `components/` or `app/api/` without syncing README/GUIDE/TEXT_STREAMING/AGENTS leads to stale operator guidance.
+- Updating workflows/contracts without updating `docs/ai/L1` and L0 `Last Reviewed` breaks progressive disclosure trust.
 
-Agora RTC accepts `uid=0` as auto-assign, but RTM login needs the token subject to match a concrete user ID. `/api/generate-agora-token` replaces missing, zero, and negative UIDs with a generated UID before calling `buildTokenWithRtm`.
+## Fast Triage Checklist
 
-## Tailwind Must Scan UIKit `dist`
+1. Run `agora project doctor --deep`.
+2. Verify token route still uses `buildTokenWithRtm`.
+3. Check `uid="0"` remap path.
+4. Check `isReady` guard and hook ownership constraints.
+5. Inspect connection issues panel for RTM/SAL/agent error signals.
 
-`tailwind.config.ts` `content` includes `./node_modules/agora-agent-uikit/dist/**/*.{js,mjs}`. Removing it strips uikit's runtime Tailwind classes and the visualizer + buttons render unstyled.
+## Frequent Regression Patterns
 
-## VAD API Shape
+- Refactoring token route and accidentally removing RTM capability.
+- Simplifying transcript list logic and unintentionally dropping interrupted turns.
+- Moving toolkit init into mount-only effect and reintroducing StrictMode double-init.
+- Replacing `useRef` RTC client storage with recreated client object per render.
 
-Use `turnDetection.config.start_of_speech` and `turnDetection.config.end_of_speech`. The deprecated flat `turnDetection.type: 'agora_vad'` is rejected by current SDK versions — the agent session will fail to start with a vague error.
+## Symptom-to-File Debug Guide
 
-## Audio PTS Parameter
+| Symptom | First Files to Inspect |
+| --- | --- |
+| RTM login fails | `app/api/generate-agora-token/route.ts`, `components/LandingPage.tsx` |
+| Agent starts but no transcript | `components/ConversationComponent.tsx`, `lib/conversation.ts` |
+| Conversation hangs on end | `components/LandingPage.tsx`, `app/api/stop-conversation/route.ts` |
+| Metrics panel empty | `components/ConversationComponent.tsx`, `components/QuickstartPipelineMetrics.tsx` |
 
-`ConversationComponent` sets `AgoraRTC.setParameter('ENABLE_AUDIO_PTS', true)` inside a `useEffect([client])`. This is intentional — it improves transcript timing and must run after the RTC client exists. If you remove or duplicate the call, transcripts may desync or warn in dev.
+## Sandbox and Local Dev Caveats
 
-## Doc Drift to Watch For
+- `pnpm run dev` can fail in restricted environments due to port/process limits.
+- Route contract checks are better suited for restricted CI/sandbox contexts.
+- Some failures are environment-binding issues, not code regressions.
 
-- `docs/TEXT_STREAMING_GUIDE.md` mentions `ConvoTextStream` and "uid=0 token" renewal. The current code uses `QuickstartTranscriptPanel` and renews with `agoraData.uid`. Treat the doc as background reading, not implementation truth.
-- `docs/GUIDE.md` has scaffolding excerpts older than the current `components/` layout.
+## Pre-merge Gotcha Checklist
 
-## Unused Tree Branches
+- Confirm no manual `leave()` or `close()` lifecycle calls were introduced.
+- Confirm transcript mapping still remaps sentinel local UID.
+- Confirm token renewal still returns both RTC and RTM tokens.
+- Confirm docs were updated when workflow/interface behavior changed.
 
-- `hooks/use-mobile.tsx` exports `useIsMobile` but nothing imports it.
-- `styles/globals.css` is shadcn baseline output but `app/layout.tsx` imports `./globals.css` instead. Treat `styles/globals.css` as legacy and avoid editing it.
+## Incident Learning Notes
 
-## `app/api/chat/completions/route.ts` Is Not Wired
-
-The route compiles and is contract-tested, but `components/` does not call it. Voice agents use the LLM configured in `invite-agent/route.ts`, not this route. Wiring it requires pointing the managed agent at the route's URL — see `05_workflows.md`.
-
-## PostCSS Plugin Set
-
-`postcss.config.mjs` only lists the `tailwindcss` plugin. `autoprefixer` is a `package.json` dependency but is not enabled. If you need vendor prefixes, add `autoprefixer` to `postcss.config.mjs` rather than installing it again.
-
-## RTC Effect-Level Parameters
-
-`ConversationComponent` calls `AgoraRTC.setParameter('ENABLE_AUDIO_PTS', true)` inside `useEffect([client])`. The call uses optional chaining (`setParameter?.`) so it is safe on SDK versions that do not expose the method. If you need additional `AgoraRTC.setParameter` calls, place them in the same effect alongside this one.
-
-## Idempotent Stop Path
-
-`/api/stop-conversation` returns `200 { success: true, state: 'already-stopping' }` when the SDK reports the agent was already stopping. Treat both `success: true` shapes as success on the client; do not branch UI on the missing `state` field.
-
-## RTM Renewal Uses `agoraData.uid`, Not RTC `uid`
-
-`handleTokenWillExpire` fetches two tokens with different `uid` query parameters. The RTM renewal token uses `agoraData.uid` (the original logged-in UID), not the RTC `client.uid`. Swapping them silently breaks renewal because RTM rejects tokens that do not match the logged-in account.
-
-## Doctor Script Hard Fails
-
-`scripts/doctor.mjs` exits with code `1` rather than warning. CI and `pnpm run verify` both treat that as fatal. If you intentionally want to skip the doctor (e.g. in a partial CI job), run the narrower `pnpm run lint` / `pnpm run typecheck` / `pnpm run verify:api` / `pnpm run build` chain directly.
-
-## Build Command Uses Webpack, Not Turbopack
-
-`pnpm run dev` runs `next dev --webpack`. The Next 16 default is Turbopack, but this repo opts out for parity with the build pipeline. If you switch to Turbopack you may see different HMR behavior and slightly different module resolution; verify `pnpm run build` still passes before merging.
+- Connection issue deduplication intentionally uses a small time window to avoid noisy cascades.
+- Invite failures are intentionally non-fatal to allow UI fallback state visibility.
+- Raw RTM fallback parsing exists because higher-level hooks may miss some signaling payloads in edge conditions.
 
 ## Related Deep Dives
 
-- [StrictMode Lifecycle](L2/strict_mode_lifecycle.md) — Why the `isReady` pattern looks the way it does.
-- [Transcript Pipeline](L2/transcript_pipeline.md) — Detailed walkthrough of normalization and event handlers.
+- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Start/stop race and lifecycle ownership details.
+- [transcript_pipeline.md](L2/transcript_pipeline.md) — Transcript edge cases and failure surfaces.

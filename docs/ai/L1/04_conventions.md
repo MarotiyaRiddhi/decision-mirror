@@ -1,86 +1,87 @@
 # 04 Conventions
 
-> How code is structured and what patterns to keep when editing.
+> Implementation conventions that protect lifecycle correctness, transcript accuracy, and docs/code alignment.
 
-## Language & Tooling
+## React and RTC Lifecycle
 
-- TypeScript `strict: true` (`tsconfig.json`). Path alias `@/*` resolves to repo root.
-- ESLint: `eslint-config-next/core-web-vitals` + `typescript-eslint` (`eslint.config.mjs`).
-  - `@typescript-eslint/no-explicit-any` is `warn`.
-  - `@typescript-eslint/no-unused-vars` is `warn`, allowing `_`-prefixed unused identifiers.
-- No Prettier config; ESLint is the formatter gate.
-- pnpm only — see `scripts/doctor.mjs`.
-
-## File Naming
-
-| Layer            | Convention                                              | Example                                          |
-| ---------------- | ------------------------------------------------------- | ------------------------------------------------ |
-| Components       | PascalCase `.tsx` files                                 | `QuickstartTranscriptPanel.tsx`                  |
-| UI primitives    | lowercase under `components/ui/`                        | `components/ui/button.tsx`                       |
-| Hooks            | `useXxx` exports, kebab-case file name                  | `hooks/use-mobile.tsx` → `useIsMobile`           |
-| API routes       | `app/api/<resource>/route.ts`, default export per verb  | `app/api/invite-agent/route.ts`                  |
-| Types            | flat files under `types/`                               | `types/conversation.ts`                          |
+- Keep RTC client creation StrictMode-safe with `useRef`, not `useMemo`.
+- Use `isReady` guard (`setTimeout(..., 0)` pattern) before `useJoin` and `useLocalMicrophoneTrack`.
+- Do not disable React StrictMode as a workaround.
 
 ## Hook Ownership Rules
 
-These come from the maintained progressive disclosure docs and comments in `ConversationComponent.tsx`:
+- `useJoin` owns `client.leave()`; never leave manually.
+- `useLocalMicrophoneTrack` owns track lifecycle; never call `.close()` manually.
+- `usePublish` owns publish state; mute with `track.setEnabled()`.
 
-- `useJoin` owns `client.leave()` — never call it manually.
-- `useLocalMicrophoneTrack` owns the track lifecycle — do not call `.close()` manually.
-- `usePublish` owns publish state — mute via `track.setEnabled()`; never manually unpublish.
-- The RTC `client` is held in `useRef` (not `useMemo`) so StrictMode's double-mount keeps the same instance.
+## Transcript Conventions
 
-## StrictMode `isReady` Guard
+- `uid === "0"` from toolkit is local-user sentinel and must be remapped to real `client.uid`.
+- Include `INTERRUPTED` in history list; only filter out `IN_PROGRESS`.
+- Normalize punctuation spacing for compacted provider output.
+- Normalize timestamps to milliseconds before issue rendering.
 
-`useJoin` and `useLocalMicrophoneTrack` must be gated by `isReady`:
+## Token and RTM Contract
 
-```tsx
-const [isReady, setIsReady] = useState(false);
-useEffect(() => {
-  let cancelled = false;
-  const id = setTimeout(() => { if (!cancelled) setIsReady(true); }, 0);
-  return () => { cancelled = true; clearTimeout(id); setIsReady(false); };
-}, []);
-```
+- Token route must use `RtcTokenBuilder.buildTokenWithRtm`.
+- RTC-only token builders break RTM login/subscription.
+- Renewal flow independently mints RTC and RTM tokens while keeping shared channel.
 
-`AgoraVoiceAI.init` is then gated on `isReady && joinSuccess` so it runs exactly once per real mount.
+## API and Error Handling Style
 
-## API Route Patterns
+- Route handlers validate required body/env early and return clear status codes.
+- Stop route is idempotent for already-stopping/not-found agent states.
+- Frontend logs detailed technical errors and shows concise user-facing messages.
 
-- Validate JSON body up front; return `400` with `{ error: '<field> is required' }` for missing inputs.
-- Wrap external SDK calls in `try/catch`; log via `console.error`; return `500` with a sanitized `{ error }`.
-- Use `requireEnv()` (in `invite-agent/route.ts`) so missing env vars throw early.
-- Never return `NEXT_AGORA_APP_CERTIFICATE` or any BYOK key in responses.
+## Styling and UI Kit Rules
 
-## Transcript & UI Patterns
+- Tailwind config must scan `./node_modules/agora-agent-uikit/dist/**/*.{js,mjs}`.
+- Prefer existing quickstart layout components over introducing parallel shells.
 
-- The toolkit uses `uid="0"` as a sentinel for the local user's speech. `normalizeTranscript` in `lib/conversation.ts` remaps it to `String(client.uid)` — never bypass this remap or `ConvoTextStream`-style UIs render the user on the wrong side.
-- `getMessageList` filters only `TurnStatus.IN_PROGRESS`. `INTERRUPTED` turns must remain in the list, otherwise an interrupted first turn leaves the transcript panel empty.
-- Agent visualizer state comes from `mapAgentVisualizerState` — keep new agent states mapped instead of branching in components.
+## Documentation Synchronization
 
-## Tailwind & Theming
+When changing workflow/contracts/ownership in `components` or `app/api`, update:
 
-- Theme tokens are HSL CSS variables in `app/globals.css` and consumed via `hsl(var(--token) / <alpha-value>)` in `tailwind.config.ts`.
-- `tailwind.config.ts` `content` must include `./node_modules/agora-agent-uikit/dist/**/*.{js,mjs}` so uikit classes survive purge.
-- `components.json` (shadcn) points Tailwind at `app/globals.css`. `styles/globals.css` exists but is not imported by the running app — treat it as legacy.
+- `README.md`
+- `docs/GUIDE.md`
+- `docs/TEXT_STREAMING_GUIDE.md`
+- `AGENTS.md`
+- relevant `docs/ai/L1/*.md` and `docs/ai/L0_repo_card.md` `Last Reviewed`
 
-## Logging
+## Git Conventions
 
-- Server routes use `console.error`. Client uses `console.warn` for advisory issues (e.g. `ENABLE_AUDIO_PTS` parameter set) and `console.error` for failures.
-- No structured logger is wired; do not add one without a discussion in `CONTRIBUTING.md`.
+- Conventional commits: `type: description` or `type(scope): description`.
+- Branch names: `type/short-description` lowercase with hyphens.
+- No AI tool names in commit/PR text.
+- No `--no-verify`, no git identity config edits.
 
-## Testing
+## Route Handler Conventions
 
-- There is no Vitest/Jest harness. Behavioral coverage lives in `scripts/verify-api-contracts.ts` (route contracts) and in lint/typecheck.
-- Adding a new API route requires extending `scripts/verify-api-contracts.ts`.
+- Parse and validate request body at the top of handler.
+- Return `400` for client payload problems and `500` for internal failures.
+- Keep response payloads explicit and JSON-serializable.
+- Prefer helper functions for repeated env checks or error classification.
 
-## Module Discipline
+## Commenting and Readability Style
 
-- `app/api/` reads environment, talks to the server SDK, returns JSON. It must not import from `components/`.
-- `components/` consumes route output and the toolkit. It must not import from `app/api/`.
-- `lib/` is shared and must not import from `components/` or `app/api/`.
-- If a helper would need both client and server code paths, split it into two helpers in `lib/` rather than `if (typeof window)` branching.
+- Comments should capture lifecycle reasoning or non-obvious constraints.
+- Avoid comments that merely restate code.
+- Keep runtime-sensitive constraints close to the guarded code path.
+
+## Verification Conventions
+
+- For route or contract changes, run `pnpm run verify:api` first.
+- For UI/client runtime changes, run at least lint + typecheck + build.
+- Prefer narrow checks during iteration, full `pnpm run verify` before handoff.
+
+## Pull Request Hygiene
+
+- Keep scope small and copyable for quickstart consumers.
+- Include doc updates in same change when workflow/contracts are touched.
+- Use present-tense lowercase conventional commit descriptions.
+- Avoid adding hidden requirements not represented in `env.local.example` and README.
 
 ## Related Deep Dives
 
-- [StrictMode Lifecycle](L2/strict_mode_lifecycle.md) — Full lifecycle reasoning behind the `isReady` pattern.
+- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Why StrictMode guard and hook ownership are required.
+- [transcript_pipeline.md](L2/transcript_pipeline.md) — UID remapping and turn-status handling rationale.

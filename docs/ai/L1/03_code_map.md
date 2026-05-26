@@ -1,89 +1,88 @@
 # 03 Code Map
 
-> Where to find things. Paths are relative to the repo root.
+> Directory-level ownership map and where to change behavior safely.
 
-## Top-Level Tree (curated)
+## Top-Level Layout
 
-```
-app/                     # Next.js App Router
-  layout.tsx             # Root layout, metadata, viewport, imports app/globals.css
-  page.tsx               # Renders <LandingPage />
-  globals.css            # Tailwind layers + Agora theme CSS variables
-  api/                   # Route handlers (see Interfaces)
-    generate-agora-token/route.ts
-    invite-agent/route.ts
-    stop-conversation/route.ts
-    chat/completions/route.ts
-components/              # UI + RTC/RTM lifecycle
-  LandingPage.tsx
-  ConversationComponent.tsx
-  QuickstartConversationLayout.tsx
-  QuickstartTranscriptPanel.tsx
-  QuickstartPipelineMetrics.tsx
-  QuickstartPreCallCard.tsx
-  ConnectionStatusPanel.tsx
-  ConversationErrorCard.tsx
-  MicrophoneSelector.tsx
-  ErrorBoundary.tsx
-  LoadingSkeleton.tsx
-  ui/                    # shadcn-style primitives
-    button.tsx
-    dropdown-menu.tsx
-hooks/
-  use-mobile.tsx         # useIsMobile — currently unused
-lib/
-  agora.ts               # DEFAULT_AGENT_UID = 123456
-  conversation.ts        # Transcript normalization + visualizer state mapping
-  utils.ts               # cn() (clsx + tailwind-merge)
-scripts/
-  doctor.mjs             # Local prereq + env gate
-  verify-api-contracts.ts # Route contract regression harness
-styles/
-  globals.css            # Legacy shadcn baseline, currently unused at runtime
-types/
-  conversation.ts        # Shared client/server types
-  env.d.ts               # Minimal ProcessEnv shape
-  jsx.d.ts               # JSX intrinsic augmentation
-public/                  # Static assets (logos, manifests)
-docs/                    # Long-form guides
-  GUIDE.md               # Build walkthrough (partially historical)
-  TEXT_STREAMING_GUIDE.md # Transcript + RTM architecture
+```text
+app/                 Next.js routes + API handlers
+components/          Client UI and RTC/RTM lifecycle
+lib/                 Shared constants and transcript helpers
+scripts/             Verification and doctor helpers
+docs/                Human-oriented guides
+docs/ai/             Progressive disclosure docs (this system)
+public/              Static assets and branding
+types/               Shared TypeScript route/component contracts
 ```
 
-## Core Files Table
+## API Route Ownership (`app/api`)
 
-| File                                                   | Purpose                                                                       |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| `app/api/generate-agora-token/route.ts`                | `GET` builds RTC + RTM token via `RtcTokenBuilder.buildTokenWithRtm`.         |
-| `app/api/invite-agent/route.ts`                        | `POST` starts the managed agent; owns prompt / VAD / model / voice defaults.  |
-| `app/api/stop-conversation/route.ts`                   | `POST` stops the agent; idempotent on `already-stopping`.                     |
-| `app/api/chat/completions/route.ts`                    | `POST` OpenAI-compatible SSE proxy for a custom LLM (not wired by default).   |
-| `components/LandingPage.tsx`                           | Session bootstrap: token fetch, invite-agent, RTM login + subscribe.          |
-| `components/ConversationComponent.tsx`                 | RTC join, mic publish, `AgoraVoiceAI` init, transcript/state/metrics wiring.  |
-| `components/QuickstartTranscriptPanel.tsx`             | Live transcript rail (replaces `ConvoTextStream` in DOCS).                    |
-| `components/QuickstartPipelineMetrics.tsx`             | Per-stage latency chips from `AGENT_METRICS` events.                          |
-| `lib/conversation.ts`                                  | `normalizeTranscript`, `mapAgentVisualizerState`, `getMessageList`.           |
-| `lib/agora.ts`                                         | Shared agent UID default.                                                     |
-| `scripts/doctor.mjs`                                   | Validates Node, pnpm, and `.env.local` shape.                                 |
-| `scripts/verify-api-contracts.ts`                      | Dynamic-imports each route, mocks SDK calls, asserts JSON + status codes.     |
-| `tailwind.config.ts`                                   | Must scan `node_modules/agora-agent-uikit/dist/**/*.{js,mjs}`.                |
-| `vercel.json`                                          | Vercel build/dev/install commands; maps `NEXT_PUBLIC_VERCEL_URL`.             |
-| `env.local.example`                                    | Authoritative env var list for local + Vercel.                                |
+- `generate-agora-token/route.ts`: builds RTC+RTM token via `buildTokenWithRtm`.
+- `invite-agent/route.ts`: validates input/env, configures and starts agent session.
+- `stop-conversation/route.ts`: stops agent and handles idempotent already-stopping cases.
+- `chat/completions/route.ts`: optional OpenAI-compatible SSE proxy for custom LLM path.
 
-## Module Boundaries
+## Client Ownership (`components`)
 
-- `components/` owns RTC/RTM client lifecycle and React state.
-- `app/api/` owns server-only logic and any vendor key reads.
-- `lib/` owns pure helpers safe for both server and client.
-- `scripts/` owns verification gates that block `pnpm run verify`.
-- Repo-root `AGENTS.md` plus `docs/ai/` are the maintained agent-facing guidance. Module-level `AGENTS.md` files are not present.
+- `LandingPage.tsx`: pre-call shell, token/invite/RTM bootstrap, conversation mount/unmount.
+- `ConversationComponent.tsx`: RTC join, mic publish, toolkit init, transcript/metrics/issues state.
+- `QuickstartConversationLayout.tsx`: in-call framing and slots.
+- `QuickstartTranscriptPanel.tsx`: live transcript panel.
+- `QuickstartPipelineMetrics.tsx`: latency chips from metrics stream.
+- `ConnectionStatusPanel.tsx` + `ConversationErrorCard.tsx`: issue rendering/severity.
 
-## What's Not in the Repo
+## Shared Logic (`lib`)
 
-- No `*.test.*` or `*.spec.*` files — verification is via `scripts/verify-api-contracts.ts` + lint/typecheck/build.
-- No middleware (`middleware.ts` does not exist).
-- No `agent-rules/` or `.cursor/` rule trees.
+- `agora.ts`: default constants (`DEFAULT_AGENT_UID`).
+- `conversation.ts`: transcript normalization, spacing cleanup, timestamp normalization, visualizer state mapping.
+
+## Validation and Tooling
+
+- `scripts/verify-api-contracts.ts`: imports route handlers and validates contract behavior.
+- `scripts/doctor.mjs`: local setup checks consumed by `pnpm run doctor`.
+- `tailwind.config.ts`: includes `agora-agent-uikit` dist classes in content scan.
+
+## Fast File Lookup
+
+- Change agent prompt/model/VAD -> `app/api/invite-agent/route.ts`.
+- Change token policy/channel naming -> `app/api/generate-agora-token/route.ts`.
+- Change transcript mapping behavior -> `lib/conversation.ts` + `components/ConversationComponent.tsx`.
+- Change session bootstrap UX -> `components/LandingPage.tsx`.
+
+## Additional Component Roles
+
+- `QuickstartPreCallCard.tsx`: start CTA and pre-call messaging.
+- `QuickstartConversationLayout.tsx`: shared in-call composition shell.
+- `MicrophoneSelector.tsx`: input-device selection UI.
+- `ConnectionStatusPanel.tsx`: summary + detailed connection issue panel.
+- `ErrorBoundary.tsx`: runtime guardrail for conversation subtree.
+
+## Type Contract Locations
+
+- `types/conversation.ts`: request/response payloads and component prop types.
+- `types/env.d.ts`: typed environment variable expectations.
+- `types/jsx.d.ts` and `react-jsx.d.ts`: JSX typing support details.
+
+## Static and Styling Assets
+
+- `public/*`: icons, logos, and heading SVG assets used in pre-call/in-call experience.
+- `app/globals.css` and `styles/globals.css`: baseline theme/layout styles.
+- `tailwind.config.ts`: utility class scan and theme extension.
+
+## Verification Path Mapping
+
+- API contract behavior test: `scripts/verify-api-contracts.ts`.
+- Environment and prerequisites check: `scripts/doctor.mjs`.
+- Aggregate check chain: `pnpm run verify` script in `package.json`.
+
+## Ownership Boundaries
+
+- `components/` owns client runtime lifecycle and UI state.
+- `app/api/` owns privileged operations needing app certificate.
+- `lib/` owns pure transforms reusable across client modules.
+- `docs/` owns human-facing implementation narrative and runbooks.
 
 ## Related Deep Dives
 
-- [Transcript Pipeline](L2/transcript_pipeline.md) — Walkthrough of `lib/conversation.ts` and `ConversationComponent`.
+- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Cross-file call path during start/stop.
+- [transcript_pipeline.md](L2/transcript_pipeline.md) — Mapping and rendering flow from toolkit events.

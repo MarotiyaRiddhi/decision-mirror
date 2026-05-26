@@ -1,92 +1,110 @@
 # 01 Setup
 
-> Local environment, env vars, and the verification commands wired through `package.json` and `scripts/`.
+> Environment setup, commands, and safe verification flow for this quickstart.
 
-## Prerequisites
+## Runtime Requirements
 
-- **Node** `>=22` (enforced by `scripts/doctor.mjs`).
-- **pnpm** as package manager — `scripts/doctor.mjs` checks `npm_config_user_agent` and fails on npm/yarn/bun.
-- Agora project with App ID + App Certificate. The Agora CLI can write credentials via `agora project env write .env.local`.
+- Node.js `>=22` (`package.json` engines field).
+- `pnpm` package manager.
+- Agora CLI (`agora`) for project binding and environment bootstrap.
+- Agora project with Conversational AI enabled.
 
-## Install
+## Install and Bootstrap
+
+1. Install dependencies.
+2. Bind an Agora project.
+3. Write `.env.local`.
+4. Verify setup before running.
 
 ```bash
 pnpm install
+agora login
+agora project use <your-project>
+agora project env write .env.local
+agora project doctor --deep
 ```
 
-The lockfile is `pnpm-lock.yaml`. There is no monorepo workspace; everything runs from the repo root.
+## Required Environment Variables
 
-## Environment Variables
+- `NEXT_PUBLIC_AGORA_APP_ID`: Agora project App ID.
+- `NEXT_AGORA_APP_CERTIFICATE`: Agora App Certificate (server only).
 
-`env.local.example` (copy to `.env.local`):
+Optional:
 
-| Variable                       | Scope         | Notes                                                                  |
-| ------------------------------ | ------------- | ---------------------------------------------------------------------- |
-| `NEXT_PUBLIC_AGORA_APP_ID`     | public        | Required; used by the browser RTC + RTM clients.                       |
-| `NEXT_AGORA_APP_CERTIFICATE`   | server-only   | Required; used by `app/api/generate-agora-token/route.ts`.             |
-| `NEXT_PUBLIC_AGENT_UID`        | public        | Optional override for the agent's UID (default `123456`).              |
-| `NEXT_AGENT_GREETING`          | server-only   | Optional first utterance the agent speaks.                             |
-| `NEXT_DEEPGRAM_API_KEY`        | server-only   | Optional BYOK; commented examples in `invite-agent/route.ts`.          |
-| `NEXT_LLM_URL`                 | server-only   | Required only if you wire `app/api/chat/completions/route.ts`.         |
-| `NEXT_LLM_API_KEY`             | server-only   | Required pair with `NEXT_LLM_URL`.                                     |
-| `NEXT_ELEVENLABS_API_KEY`      | server-only   | Optional BYOK TTS.                                                     |
-| `NEXT_ELEVENLABS_VOICE_ID`     | server-only   | Optional BYOK TTS voice.                                               |
-| `NEXT_PUBLIC_VERCEL_URL`       | build         | Set in `vercel.json` from `${VERCEL_URL}`; not read in app code today. |
+- `NEXT_PUBLIC_AGENT_UID` (defaults to `123456`).
+- `NEXT_AGENT_GREETING`.
+- BYOK keys (`NEXT_DEEPGRAM_API_KEY`, `NEXT_LLM_URL`, `NEXT_LLM_API_KEY`, `NEXT_ELEVENLABS_API_KEY`, `NEXT_ELEVENLABS_VOICE_ID`).
 
-`scripts/doctor.mjs` greps for `NEXT_PUBLIC_AGORA_APP_ID=…` and `NEXT_AGORA_APP_CERTIFICATE=…` in `.env.local`.
-
-## Quick Commands
+## Primary Commands
 
 ```bash
-pnpm run doctor          # Node + pnpm + .env.local sanity check
-pnpm run dev             # Next dev (webpack), http://localhost:3000
-pnpm run build           # Next production build
-pnpm run start           # Run production build
-pnpm run lint            # eslint .
-pnpm run typecheck       # tsc --noEmit
-pnpm run verify:api      # node --import tsx scripts/verify-api-contracts.ts
-pnpm run verify          # doctor → lint → typecheck → verify:api → build
+pnpm run dev
+pnpm run lint
+pnpm run typecheck
+pnpm run verify:api
+pnpm run build
+pnpm run verify
 ```
-
-There is **no `test` script** — `pnpm run verify` is the closest end-to-end gate.
 
 ## Verification Safety
 
-| Command            | Needs live Agora? | Notes                                                       |
-| ------------------ | ----------------- | ----------------------------------------------------------- |
-| `pnpm run lint`    | No                | ESLint over the whole tree.                                 |
-| `pnpm run typecheck` | No              | `tsc --noEmit`.                                             |
-| `pnpm run verify:api` | No             | Mocks `RtcTokenBuilder` + `agora-agent-server-sdk` classes. |
-| `pnpm run build`   | No                | Next production build.                                      |
-| `pnpm run verify`  | No                | Full chain, no network.                                     |
-| `pnpm run dev`     | Yes (for use)     | Often blocked in sandboxed shells due to port binding.      |
+Safe without live session:
 
-## Common Setup Failures
+- `pnpm run lint`
+- `pnpm run typecheck`
+- `pnpm run verify:api`
+- `pnpm run build`
 
-- Doctor fails with **"Node version must be >=22"** → upgrade Node.
-- Doctor fails with **"This project uses pnpm"** → installer ran under npm/yarn/bun; re-run with pnpm.
-- Doctor fails with **".env.local missing variable"** → run `agora project env write .env.local` or copy `env.local.example` manually.
-- `verify:api` fails with **"Module not found"** for `app/api/...` → a new route exists but wasn't added to `scripts/verify-api-contracts.ts`.
+Requires env/project binding:
 
-## What `scripts/doctor.mjs` Actually Checks
+- `pnpm run doctor`
+- `pnpm run verify`
 
-In order:
+## Local Run Notes
 
-1. `process.versions.node` parses to a major version `>=22`.
-2. `process.env.npm_config_user_agent` includes `pnpm/`.
-3. `env.local.example` exists at the repo root.
-4. `.env.local` exists at the repo root.
-5. `.env.local` contains both `NEXT_PUBLIC_AGORA_APP_ID=…` and `NEXT_AGORA_APP_CERTIFICATE=…` on their own lines.
+- App + API routes run at `http://localhost:3000`.
+- Session starts from `QuickstartPreCallCard` (`Try it now`) and bootstraps token + RTM + invite flow.
+- If transcript or agent join fails, first run `agora project doctor --deep`.
 
-If any check fails it logs the failure and exits with `1`. The script never writes files.
+## CI Expectations
 
-## Where Verification Lives
+- Build workflow badge exists in root `README.md`.
+- Pre-ship expectation: `pnpm run verify` passes.
+- Route contract tests are executed by `scripts/verify-api-contracts.ts`.
 
-- `scripts/verify-api-contracts.ts` dynamically imports all API routes, monkey-patches Agora SDK boundaries, and asserts status/body behavior. It covers token generation, `uid=0` replacement, invite-agent, stop-conversation, and `/api/chat/completions` env / invalid JSON / SSE `[DONE]` behavior.
-- Adding a new route requires extending this file or `pnpm run verify:api` will skip it.
-- ESLint and `tsc --noEmit` run with no network access.
-- `next build` is the slowest gate; expect 30-60 seconds on a warm cache.
+## Troubleshooting Matrix
+
+| Symptom | Probable Cause | First Check | Fix Path |
+| --- | --- | --- | --- |
+| Agent never joins | Invite route or env mismatch | `pnpm run doctor` and invite route logs | Verify `NEXT_PUBLIC_AGENT_UID` and invite payload |
+| Transcript missing | RTM token capability missing | Token route implementation | Ensure `buildTokenWithRtm` remains unchanged |
+| `verify` fails at doctor | Project not bound | `agora project use` output | Re-bind project and rewrite `.env.local` |
+| Mic publishes but no agent response | Agent start failed | UI warning (`agentJoinError`) | Inspect `/api/invite-agent` response |
+
+## Local-Only vs Deploy-Specific
+
+Local:
+
+- Uses `.env.local` created by `agora project env write`.
+- Uses `next dev --webpack`.
+- Best for flow debugging and transcript behavior checks.
+
+Vercel:
+
+- Requires environment vars configured per environment scope.
+- Keep `NEXT_AGORA_APP_CERTIFICATE` private server variable.
+- Use `pnpm run build` locally before pushing deployment changes.
+
+## Setup Change Checklist
+
+When setup docs/config change:
+
+1. Update `README.md` environment/commands sections.
+2. Update `env.local.example` if variable set changes.
+3. Update `docs/ai/L1/01_setup.md` and `L0_repo_card.md` `Last Reviewed`.
+4. Run at least `pnpm run typecheck` and `pnpm run verify:api`.
 
 ## Related Deep Dives
 
-- [Token Model](L2/token_model.md) — How `RtcTokenBuilder.buildTokenWithRtm` is invoked and renewed.
+- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Full start/join/teardown sequence.
+- [transcript_pipeline.md](L2/transcript_pipeline.md) — RTM transcript/event pipeline internals.

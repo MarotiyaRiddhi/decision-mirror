@@ -1,85 +1,99 @@
 # 05 Workflows
 
-> Step-by-step recipes for the tasks contributors actually do in this repo.
+> Repeatable task recipes for common quickstart changes and validation loops.
 
-## Add a New API Route
+## Run Locally
 
-1. Create `app/api/<name>/route.ts` with the desired HTTP verb export (`GET`, `POST`, …).
-2. Validate inputs and return `NextResponse.json(...)` with explicit status codes; follow the patterns in `app/api/invite-agent/route.ts`.
-3. Add types to `types/conversation.ts` (or a new file under `types/`) so client callers stay typed.
-4. If the browser will call the route, add a fetch wrapper or call site in `components/LandingPage.tsx` / `ConversationComponent.tsx`.
-5. Extend `scripts/verify-api-contracts.ts` with at least one happy-path and one validation case for the route.
-6. Run `pnpm run verify:api`, then `pnpm run verify`.
+1. `pnpm install`
+2. `agora login`
+3. `agora project use <your-project>`
+4. `agora project env write .env.local`
+5. `pnpm run doctor`
+6. `pnpm run dev`
 
-## Change Agent Prompt, VAD, Model, or Voice
+If start fails, run `agora project doctor --deep`.
 
-Edit `app/api/invite-agent/route.ts`:
+## Change Agent Behavior
 
-- **Prompt:** modify the `ADA_PROMPT` constant at the top of the file.
-- **Greeting:** modify `GREETING` (or set `NEXT_AGENT_GREETING` in the deployment env).
-- **VAD:** edit the `turnDetection.config` block — keep `start_of_speech` and `end_of_speech` nested; do **not** revert to the deprecated flat `turnDetection.type: 'agora_vad'`.
-- **LLM:** change the `.withLlm(new OpenAI({...}))` constructor (model name, temperature, max tokens).
-- **STT:** change `.withStt(new DeepgramSTT({...}))` (model, language).
-- **TTS:** change `.withTts(new MiniMaxTTS({...}))` (model, `voiceId`).
+Target file: `app/api/invite-agent/route.ts`.
 
-After editing, run `pnpm run verify:api` (mocks the SDK) and `pnpm run typecheck`.
+Typical edits:
 
-## Wire the Custom-LLM Route
+- System prompt (`ADA_PROMPT`).
+- Greeting default (`NEXT_AGENT_GREETING`).
+- VAD (`turnDetection.config.*`).
+- STT/LLM/TTS model/provider blocks.
 
-`app/api/chat/completions/route.ts` ships as an OpenAI-compatible SSE proxy but is **not** consumed by the browser today.
+Validation path:
 
-1. Set `NEXT_LLM_URL` and `NEXT_LLM_API_KEY`.
-2. Point the managed agent at the route by updating `invite-agent/route.ts` to pass a custom LLM endpoint (replace the `OpenAI` constructor with the route's URL).
-3. Test with `curl -N -X POST http://localhost:3000/api/chat/completions ...`.
+1. `pnpm run lint`
+2. `pnpm run typecheck`
+3. `pnpm run verify:api`
+4. `pnpm run build`
 
-## Verify Locally
+## Change Token or Session Bootstrap
 
-```bash
-pnpm run lint
-pnpm run typecheck
-pnpm run verify:api
-pnpm run build
-pnpm run verify        # runs all of the above
-```
+Token behavior:
 
-None of these require live Agora credentials. `pnpm run dev` is the only command that hits the network and Agora services.
+- Edit `app/api/generate-agora-token/route.ts`.
+- Preserve RTM-capable token generation.
 
-## Deploy to Vercel
+Bootstrap behavior:
 
-1. Push the branch and open it in Vercel.
-2. In Vercel project settings → Environment Variables, paste in `NEXT_PUBLIC_AGORA_APP_ID` and `NEXT_AGORA_APP_CERTIFICATE` (mark the certificate **Sensitive**).
-3. Optional: add `NEXT_AGENT_GREETING`, `NEXT_PUBLIC_AGENT_UID`, or any BYOK vendor keys you have wired.
-4. The `vercel.json` `buildCommand` / `installCommand` already use `pnpm`.
-5. Trigger a build; the production URL serves both the UI and `app/api/*` route handlers.
+- Edit `components/LandingPage.tsx`.
+- Keep invite + RTM setup parallelized before conversation mount.
 
-## Handle Token Renewal
+## Change Transcript Rendering
 
-Token renewal is automatic — `ConversationComponent` listens for the RTC `token-privilege-will-expire` event and calls `handleTokenWillExpire` in `LandingPage`, which fetches two new tokens (one for the RTC uid, one for the RTM uid) and renews each client. If you change UID handling, update `handleTokenWillExpire` in lockstep.
+1. Update transforms in `lib/conversation.ts`.
+2. Update wiring in `components/ConversationComponent.tsx`.
+3. Ensure `IN_PROGRESS` is separated from history, `INTERRUPTED` retained in history.
+4. Re-check `docs/TEXT_STREAMING_GUIDE.md` for consistency.
 
-## Update Module Guides After Behavior Changes
+## Ship-Readiness Workflow
 
-If you change `components/`, `app/api/`, or `lib/` behavior in a meaningful way, also update:
+1. Run `pnpm run verify`.
+2. Confirm docs alignment (`README`, guides, `AGENTS`, `docs/ai`).
+3. Use conventional commit and branch naming.
 
-- `README.md`
-- `docs/GUIDE.md` or `docs/TEXT_STREAMING_GUIDE.md` if the user-facing flow changed
-- The relevant file in `docs/ai/L1/` and the `Last Reviewed` field in `docs/ai/L0_repo_card.md`
+## Progressive Disclosure Doc Workflow
 
-## Roll Back a Bad Deploy
+- `generate docs`: create `docs/ai/` tree when absent.
+- `update docs`: refresh after workflow/interface/security changes.
+- `test docs`: execute question-based validation and write `docs/ai/test-results.md`.
 
-1. In Vercel, open the project's Deployments tab.
-2. Find the last green production deployment.
-3. Click "Promote to Production" — Vercel keeps prior builds reachable without rebuilding.
-4. Open a `fix/` branch to address the regression; the rollback itself is not committed.
+## Workflow: Add a New API Route
 
-## Refresh Static Assets
+1. Add route under `app/api/<route-name>/route.ts`.
+2. Define payload types in `types/conversation.ts` if shared with client.
+3. Add/update contract verification in `scripts/verify-api-contracts.ts`.
+4. Run `pnpm run verify:api` and `pnpm run typecheck`.
+5. Update `README.md` and `docs/ai/L1/06_interfaces.md`.
 
-`public/site.webmanifest` and `app/layout.tsx` reference favicon PNGs that are present in `public/` today. To refresh them:
+## Workflow: Modify Transcript UX
 
-1. Place the new files under `public/` (the names already referenced are `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`).
-2. Confirm `app/layout.tsx` icon block still matches.
-3. Re-run `pnpm run build` to surface 404s on any missed paths.
+1. Update transforms in `lib/conversation.ts`.
+2. Update render usage in transcript/layout components.
+3. Validate edge states (`IN_PROGRESS`, `INTERRUPTED`, empty history).
+4. Reconcile guidance in `docs/TEXT_STREAMING_GUIDE.md`.
+5. Run `pnpm run lint` and `pnpm run build`.
+
+## Workflow: Enable BYOK Provider Path
+
+1. Uncomment relevant provider block in invite route.
+2. Add env vars to `.env.local` and `env.local.example`.
+3. Keep default no-key path intact for baseline quickstart behavior.
+4. Document changes in README environment section.
+5. Re-run `pnpm run verify` before shipping.
+
+## Workflow: Docs Refresh After Runtime Changes
+
+1. Update L1 files matching changed subsystem.
+2. Update or add L2 deep dives if L1 explanation exceeds concise bounds.
+3. Bump `Last Reviewed` in `L0_repo_card.md`.
+4. Re-run docs test and append retest notes for any fixes.
 
 ## Related Deep Dives
 
-- [Invite Agent Config](L2/invite_agent_config.md) — Full managed agent payload reference.
-- [Token Model](L2/token_model.md) — Build + renewal sequence.
+- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Full runtime sequence for bootstrap and teardown tasks.
+- [transcript_pipeline.md](L2/transcript_pipeline.md) — Required checks when editing transcript flow.
