@@ -169,9 +169,8 @@ NEXT_ELEVENLABS_VOICE_ID=...
 
 ## More Docs
 
-- [docs/GUIDE.md](./docs/GUIDE.md)
-- [docs/TEXT_STREAMING_GUIDE.md](./docs/TEXT_STREAMING_GUIDE.md)
 - [docs/ai/L0_repo_card.md](./docs/ai/L0_repo_card.md)
+- [docs/ai/RECIPE.md](./docs/ai/RECIPE.md)
 - [AGENTS.md](./AGENTS.md)
 
 ## Contributing

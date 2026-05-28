@@ -48,7 +48,7 @@ Bootstrap behavior:
 1. Update transforms in `lib/conversation.ts`.
 2. Update wiring in `components/ConversationComponent.tsx`.
 3. Ensure `IN_PROGRESS` is separated from history, `INTERRUPTED` retained in history.
-4. Re-check `docs/TEXT_STREAMING_GUIDE.md` for consistency.
+4. Re-check [transcript_pipeline.md](L2/transcript_pipeline.md) for consistency.
 
 ## Ship-Readiness Workflow
 
@@ -84,7 +84,7 @@ Bootstrap behavior:
 1. Update transforms in `lib/conversation.ts`.
 2. Update render usage in transcript/layout components.
 3. Validate edge states (`IN_PROGRESS`, `INTERRUPTED`, empty history).
-4. Reconcile guidance in `docs/TEXT_STREAMING_GUIDE.md`.
+4. Reconcile guidance in [transcript_pipeline.md](L2/transcript_pipeline.md).
 5. Run `pnpm run lint` and `pnpm run build`.
 
 ## Workflow: Enable BYOK Provider Path

@@ -12,12 +12,12 @@ Why: provider schemas, SDK builder fields, token behavior, and RTM event details
 
 | Need | Read First | Deep Detail | Source Reference |
 | --- | --- | --- | --- |
-| Project setup, commands, env vars | [../01_setup.md](../01_setup.md) | [../../../GUIDE.md](../../../GUIDE.md) | `package.json`, `env.local.example` |
+| Project setup, commands, env vars | [../01_setup.md](../01_setup.md) | [../05_workflows.md](../05_workflows.md) | `package.json`, `env.local.example` |
 | End-to-end architecture and data flow | [../02_architecture.md](../02_architecture.md) | [conversation_lifecycle.md](conversation_lifecycle.md) | `components/LandingPage.tsx`, `components/ConversationComponent.tsx` |
 | File/module responsibilities | [../03_code_map.md](../03_code_map.md) | none | `app/api`, `components`, `lib`, `types` |
 | API payloads and response shapes | [../06_interfaces.md](../06_interfaces.md) | [token_model.md](token_model.md), [invite_agent_config.md](invite_agent_config.md) | `app/api/*/route.ts`, `types/conversation.ts` |
 | Agora SDK lifecycle rules | [../04_conventions.md](../04_conventions.md) | [strict_mode_lifecycle.md](strict_mode_lifecycle.md) | `components/ConversationComponent.tsx` |
-| Transcript, metrics, and RTM behavior | [../07_gotchas.md](../07_gotchas.md) | [transcript_pipeline.md](transcript_pipeline.md), [../../../TEXT_STREAMING_GUIDE.md](../../../TEXT_STREAMING_GUIDE.md) | `lib/conversation.ts`, transcript/metrics components |
+| Transcript, metrics, and RTM behavior | [../07_gotchas.md](../07_gotchas.md) | [transcript_pipeline.md](transcript_pipeline.md) | `lib/conversation.ts`, transcript/metrics components |
 | Security and secret boundaries | [../08_security.md](../08_security.md) | [token_model.md](token_model.md) | token, invite, and stop API routes |
 | Validation expectations | [../05_workflows.md](../05_workflows.md) | none | `scripts/verify-api-contracts.ts` |
 
