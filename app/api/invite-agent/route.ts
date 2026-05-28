@@ -7,7 +7,7 @@ import {
   ExpiresIn,
   MiniMaxTTS,
   OpenAI,
-} from 'agora-agent-server-sdk';
+} from 'agora-agents';
 import { ClientStartRequest, AgentResponse } from '@/types/conversation';
 import { DEFAULT_AGENT_UID } from '@/lib/agora';
 
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
           voiceId: 'English_captivating_female1',
         }),
         // BYOK — ElevenLabs (set NEXT_ELEVENLABS_API_KEY; optional NEXT_ELEVENLABS_VOICE_ID)
-        // new (await import('agora-agent-server-sdk')).ElevenLabsTTS({
+        // new (await import('agora-agents')).ElevenLabsTTS({
         //   key: requireEnv('NEXT_ELEVENLABS_API_KEY'),
         //   modelId: 'eleven_flash_v2_5',
         //   voiceId: process.env.NEXT_ELEVENLABS_VOICE_ID ?? 'pNInz6obpgDQGcFmaJgB',
