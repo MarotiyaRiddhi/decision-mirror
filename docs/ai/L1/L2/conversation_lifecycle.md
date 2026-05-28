@@ -1,6 +1,6 @@
-# Conversation Lifecycle
-
 > **When to Read This:** Load this when changing how a conversation session starts, renews, or stops, especially across `LandingPage`, `ConversationComponent`, and `app/api/*` routes.
+
+# Conversation Lifecycle
 
 ## Overview
 
@@ -48,7 +48,7 @@ Breaking this guard causes duplicate client/track/toolkit initialization pattern
 2. Stop route calls `client.stopAgent(agent_id)` and treats already-stopping states as success.
 3. Frontend logs out RTM client and clears RTM state.
 4. `showConversation` reset unmounts conversation view.
-5. `agora-rtc-react` hook ownership handles leave/unpublish/track cleanup.
+5. `agora-rtc-react` hook ownership handles leave/unpublish/track cleanup after unmount.
 6. Toolkit cleanup path unsubscribes and destroys `AgoraVoiceAI` singleton.
 
 ## Failure Modes and Recovery

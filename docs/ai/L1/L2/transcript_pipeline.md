@@ -1,6 +1,6 @@
-# Transcript Pipeline
-
 > **When to Read This:** Load this when modifying transcript rendering, event handling, UID mapping, metrics/error panels, or RTM fallback parsing.
+
+# Transcript Pipeline
 
 ## Overview
 

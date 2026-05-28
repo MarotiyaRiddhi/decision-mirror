@@ -61,6 +61,7 @@ Bootstrap behavior:
 - `generate docs`: create `docs/ai/` tree when absent.
 - `update docs`: refresh after workflow/interface/security changes.
 - `test docs`: execute question-based validation and write `docs/ai/test-results.md`.
+- `fix docs`: close findings from `docs/ai/test-results.md` or a docs review.
 
 ## Workflow: Add a New API Route
 

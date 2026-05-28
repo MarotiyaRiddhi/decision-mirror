@@ -1,6 +1,6 @@
-# Invite Agent Config
-
 > **When to Read This:** Load this document when you are changing the agent's prompt, voice, VAD behavior, model selection, or wiring a bring-your-own-key (BYOK) provider.
+
+# Invite Agent Config
 
 ## Where It Lives
 
