@@ -466,24 +466,8 @@ export default function ConversationComponent({
   useClientEvent(client, 'token-privilege-will-expire', handleTokenWillExpire);
 
   const handleEndConversation = useCallback(async () => {
-    const track = localMicrophoneTrack;
-    if (track) {
-      try {
-        await client?.unpublish(track);
-      } catch (error) {
-        console.warn('Failed to unpublish microphone track:', error);
-      }
-
-      try {
-        track.stop();
-        track.close();
-      } catch (error) {
-        console.warn('Failed to release microphone track:', error);
-      }
-    }
-
     onEndConversation();
-  }, [client, localMicrophoneTrack, onEndConversation]);
+  }, [onEndConversation]);
 
   return (
     <QuickstartConversationLayout

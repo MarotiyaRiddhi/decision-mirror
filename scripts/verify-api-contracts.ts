@@ -1,4 +1,4 @@
-import { AgoraClient, Agent } from 'agora-agent-server-sdk';
+import { AgoraClient, Agent } from 'agora-agents';
 import { RtcTokenBuilder } from 'agora-token';
 import { NextRequest } from 'next/server';
 

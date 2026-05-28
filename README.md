@@ -125,7 +125,7 @@ The browser fetches a combined RTC + RTM token (`buildTokenWithRtm`) from this a
 2. The backend invites an Agora cloud agent with `/api/invite-agent`.
 3. The browser joins the channel and publishes mic audio.
 4. The client receives transcript, agent state, and `AGENT_METRICS` (per-stage latency) events over RTM.
-5. On end, the client unpublishes and stops the local microphone track, then calls `/api/stop-conversation` to terminate the agent session.
+5. On end, the client calls `/api/stop-conversation`, logs out RTM, and unmounts the call view so Agora React hooks clean up RTC publish/join and the local microphone track.
 
 ## Optional BYOK
 
@@ -169,8 +169,9 @@ NEXT_ELEVENLABS_VOICE_ID=...
 
 ## More Docs
 
-- [DOCS/GUIDE.md](./DOCS/GUIDE.md)
-- [DOCS/TEXT_STREAMING_GUIDE.md](./DOCS/TEXT_STREAMING_GUIDE.md)
+- [docs/GUIDE.md](./docs/GUIDE.md)
+- [docs/TEXT_STREAMING_GUIDE.md](./docs/TEXT_STREAMING_GUIDE.md)
+- [docs/ai/L0_repo_card.md](./docs/ai/L0_repo_card.md)
 - [AGENTS.md](./AGENTS.md)
 
 ## Contributing

@@ -61,6 +61,15 @@ Bootstrap behavior:
 - `generate docs`: create `docs/ai/` tree when absent.
 - `update docs`: refresh after workflow/interface/security changes.
 - `test docs`: execute question-based validation and write `docs/ai/test-results.md`.
+- `fix docs`: close findings from `docs/ai/test-results.md` or a docs review.
+
+## Workflow: Implement a Baseline Recipe Repo
+
+1. Treat this repo as the official Agora Next.js quickstart baseline.
+2. Do not recreate Agora ConvoAI integration from memory.
+3. Follow [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) for the implementation map and checklist.
+4. Preserve the recipe invariants in `docs/ai/RECIPE.md`.
+5. Run the verification commands before publishing a derivative.
 
 ## Workflow: Add a New API Route
 
@@ -96,4 +105,5 @@ Bootstrap behavior:
 ## Related Deep Dives
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Full runtime sequence for bootstrap and teardown tasks.
+- [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) — Baseline implementation checklist for recipe consumers.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Required checks when editing transcript flow.

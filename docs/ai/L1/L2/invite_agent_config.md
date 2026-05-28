@@ -1,10 +1,10 @@
-# Invite Agent Config
-
 > **When to Read This:** Load this document when you are changing the agent's prompt, voice, VAD behavior, model selection, or wiring a bring-your-own-key (BYOK) provider.
+
+# Invite Agent Config
 
 ## Where It Lives
 
-All of the managed agent configuration is built in `app/api/invite-agent/route.ts`. The route receives `{ requester_id, channel_name }` from `LandingPage`, constructs an `Agent` from `agora-agent-server-sdk`, and starts a session bound to the requester's RTC channel.
+All of the managed agent configuration is built in `app/api/invite-agent/route.ts`. The route receives `{ requester_id, channel_name }` from `LandingPage`, constructs an `Agent` from `agora-agents`, and starts a session bound to the requester's RTC channel.
 
 ## Top-Level Constants
 
@@ -101,7 +101,7 @@ Replace the `DeepgramSTT` constructor. To use Deepgram with a BYOK key, set `NEX
 
 ### Swap the LLM
 
-Replace `OpenAI` with another LLM class from `agora-agent-server-sdk`. For a custom URL, point the constructor at `process.env.NEXT_LLM_URL` and pass `apiKey: process.env.NEXT_LLM_API_KEY`. Wiring through `app/api/chat/completions/route.ts` is documented in `docs/ai/L1/05_workflows.md`.
+Replace `OpenAI` with another LLM class from `agora-agents`. For a custom URL, point the constructor at `process.env.NEXT_LLM_URL` and pass `apiKey: process.env.NEXT_LLM_API_KEY`. Wiring through `app/api/chat/completions/route.ts` is documented in `docs/ai/L1/05_workflows.md`.
 
 ### Swap the TTS
 

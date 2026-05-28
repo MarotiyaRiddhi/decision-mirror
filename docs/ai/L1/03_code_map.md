@@ -85,4 +85,5 @@ types/               Shared TypeScript route/component contracts
 ## Related Deep Dives
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Cross-file call path during start/stop.
+- [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) — Official baseline map for recreating the quickstart recipe.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Mapping and rendering flow from toolkit events.

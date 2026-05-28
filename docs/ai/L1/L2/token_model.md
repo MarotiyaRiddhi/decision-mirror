@@ -1,6 +1,6 @@
-# Token Model
-
 > **When to Read This:** Load this document when you are changing how tokens are built, renewed, or distributed between RTC and RTM clients.
+
+# Token Model
 
 ## The One Token Rule
 

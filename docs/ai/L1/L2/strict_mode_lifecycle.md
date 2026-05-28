@@ -1,6 +1,6 @@
-# StrictMode Lifecycle
-
 > **When to Read This:** Load this document when you are touching `useJoin`, `useLocalMicrophoneTrack`, `usePublish`, the `AgoraRTCProvider` wiring, or `AgoraVoiceAI.init` — anything that could fire twice under React StrictMode.
+
+# StrictMode Lifecycle
 
 ## Why It Matters
 
