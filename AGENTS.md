@@ -10,6 +10,8 @@ This repository uses progressive disclosure documentation. Docs live under `docs
 2. Load ALL 8 files in [docs/ai/L1/](docs/ai/L1/). They are small — load all upfront.
 3. Follow L2 deep-dive links only when L1 isn't detailed enough. The index is at [docs/ai/L1/L2/_index.md](docs/ai/L1/L2/_index.md).
 
+This repo declares `Recipe Role: base` in L0, so also read [docs/ai/RECIPE.md](docs/ai/RECIPE.md) when evaluating extension points, invariants, or stable contracts.
+
 The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canonical contributor handbook for hands-on work; the `docs/ai/` tree is the structured summary used by AI agents.
 
 ## Start Here
@@ -112,8 +114,8 @@ useEffect(() => {
 ### Transcript and UI Mapping
 
 - Manage `transcript` and `agentState` through `useState` plus `ai.on(TRANSCRIPT_UPDATED, ...)` and `ai.on(AGENT_STATE_CHANGED, ...)`.
-- The toolkit uses `uid="0"` as a sentinel for the local user's speech. Remap that value to `client.uid` in the `TRANSCRIPT_UPDATED` callback or `ConvoTextStream` will render user speech on the wrong side.
-- Include `INTERRUPTED` turns in `messageList`; filter only `IN_PROGRESS`. If the agent's first turn is interrupted and omitted, `messageList` stays empty and `ConvoTextStream` never auto-opens.
+- The toolkit uses `uid="0"` as a sentinel for the local user's speech. Remap that value to `client.uid` before passing messages into `QuickstartTranscriptPanel`, or user speech renders on the agent side.
+- Include `INTERRUPTED` turns in `messageList`; filter only `IN_PROGRESS`. If the agent's first turn is interrupted and omitted, `messageList` stays empty and the transcript panel never shows that first turn.
 
 ### Tokens and Styling
 
@@ -213,5 +215,6 @@ Before finishing a change:
 | generate docs   | No `docs/ai/` directory exists yet                           |
 | update docs     | Code changed since the `Last Reviewed` date in L0            |
 | test docs       | Verify docs give agents the right context (writes `docs/ai/test-results.md`) |
+| fix docs        | Close findings from a docs review or test run                |
 
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.

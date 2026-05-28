@@ -57,7 +57,7 @@ pnpm dev
 1. Create a new branch for your feature or fix:
 
 ```bash
-git checkout -b feature/your-feature-name
+git checkout -b feat/your-feature-name
 ```
 
 2. Make your changes following our coding standards (see below)
@@ -68,7 +68,7 @@ git checkout -b feature/your-feature-name
 pnpm run verify
 ```
 
-4. Commit your changes with a clear, descriptive commit message
+4. Commit your changes with a conventional commit message such as `feat: add microphone selector`
 
 5. Push to your fork and create a Pull Request
 
@@ -146,8 +146,10 @@ Before starting work on a major feature:
 
 When changing implementation:
 - Update relevant sections in `README.md`
-- Update `DOCS/GUIDE.md` if the change affects the tutorial
-- Update `AGENTS.md` if the architecture changes
+- Update `docs/GUIDE.md` if the change affects the tutorial
+- Update `docs/TEXT_STREAMING_GUIDE.md` if transcript, RTM, metrics, or error behavior changes
+- Update `AGENTS.md` and `docs/ai/` if architecture, workflows, conventions, or contracts change
+- Use conventional commits and `type/short-description` branches; do not mention AI tool names in commit or PR text
 - Keep code comments in sync with the code
 
 ## Testing

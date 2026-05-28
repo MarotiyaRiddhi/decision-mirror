@@ -11,7 +11,10 @@
 | Language | TypeScript, Next.js 16 App Router, React 19 |
 | Deploy Target | Local Node.js dev server, Vercel |
 | Owner | Agora Conversational AI / DevEx |
-| Last Reviewed | 2026-05-22 |
+| Recipe Role | base |
+| Recipe Version | 0.1.0 |
+| Recipe Status | stable |
+| Last Reviewed | 2026-05-28 |
 
 ## L1 — Summaries
 
