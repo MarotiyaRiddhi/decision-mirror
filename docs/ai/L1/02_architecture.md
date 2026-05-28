@@ -21,7 +21,7 @@ Browser UI (LandingPage + ConversationComponent)
 
 Next.js API routes
   -> agora-token (RtcTokenBuilder.buildTokenWithRtm)
-  -> agora-agent-server-sdk (start/stop managed agent)
+  -> agora-agents (start/stop managed agent)
 
 Agora Cloud
   -> Agent session (Deepgram STT + OpenAI LLM + MiniMax TTS by default)
@@ -55,7 +55,7 @@ Agora Cloud
 - `agora-rtc-react` / `agora-rtc-sdk-ng` for media transport.
 - `agora-rtm` for data channel.
 - `agora-agent-client-toolkit` and `agora-agent-uikit` for conversation logic/UI.
-- `agora-agent-server-sdk` for managed agent lifecycle.
+- `agora-agents` for managed agent lifecycle.
 
 ## Deployment Modes
 

@@ -26,7 +26,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - Messaging: `agora-rtm` for transcripts, agent state, metrics, and error events
 - Toolkit core: `agora-agent-client-toolkit` for `AgoraVoiceAI`, transcript helpers, and turn status
 - UI components: `agora-agent-uikit` for visualizer, transcript, and mic controls
-- Server SDK: `agora-agent-server-sdk` for managed agent session startup
+- Server SDK: `agora-agents` for managed agent session startup
 - API routes: token generation, agent invite, chat, and stop routes live in `app/api`
 - Default agent config: Agora-managed STT, LLM, and TTS; no third-party vendor keys are required for the base quickstart
 
