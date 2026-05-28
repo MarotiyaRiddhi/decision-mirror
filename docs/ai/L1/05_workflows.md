@@ -48,7 +48,7 @@ Bootstrap behavior:
 1. Update transforms in `lib/conversation.ts`.
 2. Update wiring in `components/ConversationComponent.tsx`.
 3. Ensure `IN_PROGRESS` is separated from history, `INTERRUPTED` retained in history.
-4. Re-check `docs/TEXT_STREAMING_GUIDE.md` for consistency.
+4. Re-check [transcript_pipeline.md](L2/transcript_pipeline.md) for consistency.
 
 ## Ship-Readiness Workflow
 
@@ -63,6 +63,14 @@ Bootstrap behavior:
 - `test docs`: execute question-based validation and write `docs/ai/test-results.md`.
 - `fix docs`: close findings from `docs/ai/test-results.md` or a docs review.
 
+## Workflow: Implement a Baseline Recipe Repo
+
+1. Treat this repo as the official Agora Next.js quickstart baseline.
+2. Do not recreate Agora ConvoAI integration from memory.
+3. Follow [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) for the implementation map and checklist.
+4. Preserve the recipe invariants in `docs/ai/RECIPE.md`.
+5. Run the verification commands before publishing a derivative.
+
 ## Workflow: Add a New API Route
 
 1. Add route under `app/api/<route-name>/route.ts`.
@@ -76,7 +84,7 @@ Bootstrap behavior:
 1. Update transforms in `lib/conversation.ts`.
 2. Update render usage in transcript/layout components.
 3. Validate edge states (`IN_PROGRESS`, `INTERRUPTED`, empty history).
-4. Reconcile guidance in `docs/TEXT_STREAMING_GUIDE.md`.
+4. Reconcile guidance in [transcript_pipeline.md](L2/transcript_pipeline.md).
 5. Run `pnpm run lint` and `pnpm run build`.
 
 ## Workflow: Enable BYOK Provider Path
@@ -97,4 +105,5 @@ Bootstrap behavior:
 ## Related Deep Dives
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — Full runtime sequence for bootstrap and teardown tasks.
+- [from_scratch_bootstrap.md](L2/from_scratch_bootstrap.md) — Baseline implementation checklist for recipe consumers.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Required checks when editing transcript flow.

@@ -43,8 +43,6 @@
 When changing workflow/contracts/ownership in `components` or `app/api`, update:
 
 - `README.md`
-- `docs/GUIDE.md`
-- `docs/TEXT_STREAMING_GUIDE.md`
 - `AGENTS.md`
 - `docs/ai/RECIPE.md` if extension points, invariants, or stable contracts changed
 - relevant `docs/ai/L1/*.md` and `docs/ai/L0_repo_card.md` `Last Reviewed`

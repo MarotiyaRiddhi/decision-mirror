@@ -125,7 +125,7 @@ pnpm run verify
 
 - Documentation improvements
 - Error message clarity
-- Additional examples in GUIDE.md
+- Progressive disclosure documentation improvements
 - UI/UX enhancements
 - Accessibility improvements
 
@@ -146,9 +146,8 @@ Before starting work on a major feature:
 
 When changing implementation:
 - Update relevant sections in `README.md`
-- Update `docs/GUIDE.md` if the change affects the tutorial
-- Update `docs/TEXT_STREAMING_GUIDE.md` if transcript, RTM, metrics, or error behavior changes
-- Update `AGENTS.md` and `docs/ai/` if architecture, workflows, conventions, or contracts change
+- Update `AGENTS.md` and the relevant `docs/ai/` files if architecture, workflows, conventions, or contracts change
+- Update `docs/ai/RECIPE.md` if recipe extension points, invariants, or stable contracts change
 - Use conventional commits and `type/short-description` branches; do not mention AI tool names in commit or PR text
 - Keep code comments in sync with the code
 

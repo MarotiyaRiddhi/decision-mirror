@@ -2,26 +2,20 @@
 recipe_version: 0.1.0
 recipe_status: stable
 extension_points:
-  - id: api.routes
-    name: API routes
-  - id: prompts.system
-    name: system prompt surface
-  - id: pipeline.providers
-    name: managed and BYOK provider chain
-  - id: ui.conversation
-    name: pre-call and in-call UI
+  - api.routes
+  - prompts.system
+  - pipeline.providers
+  - ui.conversation
 invariants:
-  - id: tokens.rtc-rtm
-    summary: token route issues combined RTC and RTM tokens
-  - id: lifecycle.strict-mode
-    summary: RTC join and mic setup remain StrictMode-safe
-  - id: transcript.uid-remap
-    summary: toolkit local-user UID sentinel is remapped before rendering
+  - baseline.official-sample
+  - tokens.rtc-rtm
+  - lifecycle.strict-mode
+  - transcript.uid-remap
 stable_contracts:
-  - id: env.required
-    summary: NEXT_PUBLIC_AGORA_APP_ID and NEXT_AGORA_APP_CERTIFICATE
-  - id: api.start-stop
-    summary: token, invite-agent, and stop-conversation route contracts
+  - env.required
+  - api.token
+  - api.invite-agent
+  - api.stop-conversation
 ---
 
 # Quickstart Recipe Profile
@@ -43,35 +37,11 @@ This base recipe provides a copyable browser voice-agent starter with:
 - managed default STT, LLM, and TTS provider configuration
 - pre-call, in-call, transcript, metrics, and connection-status UI
 
-## Build From Scratch Map
+## Baseline Implementation Guidance
 
-Use this section when implementing the recipe in a new repo instead of modifying this one.
+This repository is the official Agora Next.js quickstart baseline for this recipe. Agents should use this repo's source and progressive disclosure docs as the starting point, then customize.
 
-| Need | Read First | Deep Detail | Source Reference |
-| --- | --- | --- | --- |
-| Project setup, commands, env vars | [L1/01_setup.md](L1/01_setup.md) | [../GUIDE.md](../GUIDE.md) | `package.json`, `env.local.example` |
-| End-to-end architecture and data flow | [L1/02_architecture.md](L1/02_architecture.md) | [L1/L2/conversation_lifecycle.md](L1/L2/conversation_lifecycle.md) | `components/LandingPage.tsx`, `components/ConversationComponent.tsx` |
-| File/module responsibilities | [L1/03_code_map.md](L1/03_code_map.md) | none | `app/api`, `components`, `lib`, `types` |
-| API payloads and response shapes | [L1/06_interfaces.md](L1/06_interfaces.md) | [L1/L2/token_model.md](L1/L2/token_model.md), [L1/L2/invite_agent_config.md](L1/L2/invite_agent_config.md) | `app/api/*/route.ts`, `types/conversation.ts` |
-| Agora SDK lifecycle rules | [L1/04_conventions.md](L1/04_conventions.md) | [L1/L2/strict_mode_lifecycle.md](L1/L2/strict_mode_lifecycle.md) | `components/ConversationComponent.tsx` |
-| Transcript, metrics, and RTM behavior | [L1/07_gotchas.md](L1/07_gotchas.md) | [L1/L2/transcript_pipeline.md](L1/L2/transcript_pipeline.md), [../TEXT_STREAMING_GUIDE.md](../TEXT_STREAMING_GUIDE.md) | `lib/conversation.ts`, transcript/metrics components |
-| Security and secret boundaries | [L1/08_security.md](L1/08_security.md) | [L1/L2/token_model.md](L1/L2/token_model.md) | token, invite, and stop API routes |
-| Validation expectations | [L1/05_workflows.md](L1/05_workflows.md) | none | `scripts/verify-api-contracts.ts` |
-
-## Minimum Implementation Checklist
-
-To recreate this quickstart from scratch, implement these pieces in order:
-
-1. Create a Next.js App Router project with React, TypeScript, Tailwind, and the Agora dependencies from `package.json`.
-2. Add `env.local.example` with `NEXT_PUBLIC_AGORA_APP_ID`, `NEXT_AGORA_APP_CERTIFICATE`, optional `NEXT_PUBLIC_AGENT_UID`, optional `NEXT_AGENT_GREETING`, and BYOK examples.
-3. Implement `GET /api/generate-agora-token` with `RtcTokenBuilder.buildTokenWithRtm`; return `{ token, uid, channel }` and replace invalid or zero UIDs.
-4. Implement `POST /api/invite-agent` with `AgoraClient`, `Agent`, managed `DeepgramSTT`, `OpenAI`, `MiniMaxTTS`, RTM enabled, metrics enabled, and `{ requester_id, channel_name }` input.
-5. Implement `POST /api/stop-conversation` with idempotent already-stopping/not-found handling.
-6. Implement optional `POST /api/chat/completions` only when exposing a custom LLM SSE proxy.
-7. Implement `LandingPage` to fetch token, start the agent, log into RTM, subscribe to the channel, mount the conversation, renew tokens, and log out RTM on end.
-8. Implement `ConversationComponent` with StrictMode-safe `isReady`, `useJoin`, `useLocalMicrophoneTrack`, `usePublish`, `AgoraVoiceAI.init`, event subscriptions, token renewal, and hook-owned teardown.
-9. Implement transcript helpers that remap `uid="0"` to the local RTC UID, normalize spacing/timestamps, keep `INTERRUPTED`, and render `IN_PROGRESS` separately.
-10. Add API contract verification for token, invite, stop, and optional custom LLM behavior.
+Do not recreate Agora ConvoAI integration from memory. Provider schemas, SDK builder fields, token behavior, and RTM event details can drift. For a new baseline implementation, follow [L1/L2/from_scratch_bootstrap.md](L1/L2/from_scratch_bootstrap.md) while copying verified patterns from this repo.
 
 ## Extension Points
 
@@ -83,6 +53,7 @@ To recreate this quickstart from scratch, implement these pieces in order:
 ## Invariants
 
 - Keep `RtcTokenBuilder.buildTokenWithRtm` for RTM-capable tokens.
+- Treat this repo as the official baseline; customize after preserving a working token, invite, RTC, RTM, and transcript flow.
 - Preserve StrictMode `isReady` guard for join/mic initialization.
 - Preserve UID remap (`uid="0"`) and `INTERRUPTED` message-list inclusion.
 - Keep documentation synchronized when workflows/contracts change.

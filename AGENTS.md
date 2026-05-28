@@ -17,8 +17,9 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 ## Start Here
 
 - Read [README.md](./README.md) for setup, commands, verification, and deployment.
-- Use [docs/GUIDE.md](./docs/GUIDE.md) for the long-form build walkthrough.
-- Use [docs/TEXT_STREAMING_GUIDE.md](./docs/TEXT_STREAMING_GUIDE.md) for transcript and RTM behavior.
+- Use [docs/ai/RECIPE.md](docs/ai/RECIPE.md) for the base quickstart recipe contract.
+- Use [docs/ai/L1/L2/from_scratch_bootstrap.md](docs/ai/L1/L2/from_scratch_bootstrap.md) for the baseline implementation map.
+- Use [docs/ai/L1/L2/transcript_pipeline.md](docs/ai/L1/L2/transcript_pipeline.md) for transcript and RTM behavior.
 - For layout and responsibilities inside `components/`, `app/api/`, and `lib/`, use [docs/ai/L1/03_code_map.md](docs/ai/L1/03_code_map.md) and [docs/ai/L1/02_architecture.md](docs/ai/L1/02_architecture.md).
 
 ## Current System Shape
@@ -51,7 +52,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - UI and RTC/RTM client lifecycle live in `components`.
 - Browser-facing API routes live in `app/api`.
 - Shared constants and transcript normalization live in `lib`.
-- If a workflow, request contract, or ownership boundary changes, update `README.md`, `docs/GUIDE.md`, `docs/TEXT_STREAMING_GUIDE.md`, and this file in the same change.
+- If a workflow, request contract, or ownership boundary changes, update `README.md`, `AGENTS.md`, and the relevant `docs/ai/` files in the same change.
 
 ## Key Files
 
@@ -129,7 +130,7 @@ useEffect(() => {
 - Keep token generation on `RtcTokenBuilder.buildTokenWithRtm`.
 - Keep transcript UID remapping aligned with the toolkit sentinel behavior.
 - Do not require third-party vendor API keys unless the code actually introduces a BYOK provider path.
-- Keep README, `docs/GUIDE.md`, and `docs/TEXT_STREAMING_GUIDE.md` aligned with implementation changes.
+- Keep README, AGENTS, and `docs/ai/` aligned with implementation changes.
 
 ## Commands
 
@@ -180,7 +181,7 @@ Before finishing a change:
 
 1. Run the narrowest relevant verification command.
 2. For shipped app/runtime changes, ensure `pnpm run verify` passes.
-3. If you changed files in `components/` or `app/api/`, verify that `docs/GUIDE.md`, `docs/TEXT_STREAMING_GUIDE.md`, `README.md`, and this file still match the implementation.
+3. If you changed files in `components/` or `app/api/`, verify that `README.md`, this file, and the relevant `docs/ai/` files still match the implementation.
 4. Update root README and affected docs when workflow, request contracts, architecture, or environment guidance changes.
 5. If the change touches workflows, interfaces, gotchas, or security details, update the matching file under [docs/ai/L1/](docs/ai/L1/) and bump `Last Reviewed` in [docs/ai/L0_repo_card.md](docs/ai/L0_repo_card.md).
 
