@@ -117,6 +117,8 @@ export async function POST(request: NextRequest) {
       // - enable_error_message emits AGENT_ERROR payloads
       // - enable_metrics emits AGENT_METRICS latency payloads
       parameters: {
+        // web client → ultra-low-latency chorus profile
+        audio_scenario: 'chorus',
         data_channel: 'rtm',
         enable_error_message: true,
         enable_metrics: true,
