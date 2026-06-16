@@ -53,11 +53,17 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error generating Agora token:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to generate Agora token',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+       {
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+      stack:
+        error instanceof Error
+          ? error.stack
+          : undefined,
+    },
+    { status: 500 },
+  );
   }
 }
